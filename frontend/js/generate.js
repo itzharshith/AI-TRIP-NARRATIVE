@@ -191,12 +191,8 @@ window.handleGenerate = async function (overrideTone = null) {
       showToast(`✨ Narrative ready (${words} words)! Press ▶ to listen.`, 'success', 4000);
     }
 
-    // Firestore backup (non-blocking)
-    if (window.AppService) {
-      AppService.generateNarrative(lastFormData).catch(e =>
-        console.warn('Firestore backup error:', e)
-      );
-    }
+    // NOTE: Firestore save is handled above via FirestoreService.saveNarrative().
+    // AppService.generateNarrative removed to prevent duplicate save.
 
   } catch (e) {
     console.error('Generate error:', e);

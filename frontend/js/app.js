@@ -295,12 +295,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Modal close
   document.getElementById('modalClose')?.addEventListener('click', () => {
     document.getElementById('detailModal')?.classList.remove('open');
-    window.TTS.stop();
+    window.TTS?.stop();
   });
   document.getElementById('detailModal')?.addEventListener('click', (e) => {
     if (e.target === e.currentTarget) {
       e.currentTarget.classList.remove('open');
-      window.TTS.stop();
+      window.TTS?.stop();
     }
   });
 

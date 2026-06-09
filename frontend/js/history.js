@@ -80,22 +80,66 @@ function attachFirestoreListener(userId) {
 
   console.log(`[history] Attaching Firestore listener for userId=${userId}`);
 
-  _unsubscribeFn = FirestoreService.listenUserNarratives(userId, ({ data, error }) => {
-    if (error) {
-      console.error('[history] Firestore listener error:', error);
-      // Check if it's a missing index error
-      if (error.includes('index')) {
-        showHistoryError('Database index is being built. Please wait a moment and refresh.');
-      } else {
-        fetchHistoryFallback();   // Fallback to REST on Firestore error
-      }
+  // Try with orderBy first (needs composite index).
+  // If index is missing, Firestore returns an error with a link to create it.
+  // We fall back to fetching without orderBy and sort client-side.
+  let tried = false;
+
+  function tryListen(withOrder) {
+    let query = FirestoreService.listenUserNarratives
+      ? undefined
+      : null;
+
+    // Use the raw Firestore query if we need to try without orderBy
+    if (!withOrder && firebaseDb) {
+      const snap = firebaseDb
+        .collection('narratives')
+        .where('userId', '==', userId)
+        .onSnapshot(
+          (s) => {
+            const data = s.docs
+              .map(d => ({ id: d.id, ...d.data() }))
+              .sort((a, b) => {
+                const ta = a.createdAt?.toMillis?.() || new Date(a.createdAt || 0).getTime();
+                const tb = b.createdAt?.toMillis?.() || new Date(b.createdAt || 0).getTime();
+                return tb - ta;
+              });
+            _narratives = data;
+            console.log(`[history] Listener (no-order fallback): ${data.length} narratives`);
+            applySearchAndRender();
+          },
+          (e) => {
+            console.error('[history] Fallback listener error:', e.message);
+            fetchHistoryFallback();
+          }
+        );
+      _unsubscribeFn = () => snap();
       return;
     }
 
-    _narratives = data;
-    console.log(`[history] Real-time update: ${data.length} narratives`);
-    applySearchAndRender();
-  });
+    // Primary path: listenUserNarratives (uses where + orderBy)
+    _unsubscribeFn = FirestoreService.listenUserNarratives(userId, ({ data, error }) => {
+      if (error) {
+        console.error('[history] Firestore listener error:', error);
+        if (!tried && (error.includes('index') || error.includes('Index'))) {
+          tried = true;
+          console.warn('[history] Composite index missing — retrying without orderBy');
+          // Detach current listener
+          if (_unsubscribeFn) { _unsubscribeFn(); _unsubscribeFn = null; }
+          tryListen(false);   // Fall back to no-order query
+        } else {
+          fetchHistoryFallback();
+        }
+        return;
+      }
+
+      _narratives = data;
+      console.log(`[history] Real-time update: ${data.length} narratives`);
+      applySearchAndRender();
+    });
+  }
+
+  tryListen(true);
 }
 
 // ── Apply search filter and render ───────────────────────────

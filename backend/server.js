@@ -50,9 +50,20 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ── SPA Fallback ────────────────────────────────────────────
-app.get('*', (_req, res) => {
+// Serve login.html when explicitly requested
+app.get('/login.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/login.html'));
+});
+
+// Serve index.html for all other non-API routes (SPA)
+app.get('*', (req, res) => {
+  // Don't serve index.html for API routes (shouldn't reach here, but safety)
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
+
 
 // ── Start Server (init DB first, then listen) ───────────────
 db.init().then(() => {
