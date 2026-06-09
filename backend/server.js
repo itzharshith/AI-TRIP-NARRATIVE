@@ -5,6 +5,9 @@ const path = require('path');
 
 const db = require('./db/database');
 
+// Initialize Firebase Admin SDK at startup (logs status before routes)
+require('./firebase/admin');
+
 const generateRoute = require('./routes/generate');
 const historyRoute = require('./routes/history');
 const feedbackRoute = require('./routes/feedback');

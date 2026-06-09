@@ -15,9 +15,12 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-  <!-- Firebase JS SDK -->
+  <!-- Firebase JS SDK v10 (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics-compat.js"></script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="css/style.css">
@@ -345,7 +348,6 @@
 
           <div class="auth-divider">or</div>
 
-          <!-- Email/Password Form -->
           <form class="auth-form" id="adminLoginForm" novalidate>
             <div class="input-group">
               <label for="adminEmail">Email Address</label>
@@ -360,6 +362,9 @@
             <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" id="emailSignInBtn">
               Sign In
             </button>
+            <p style="text-align:center;margin-top:10px;">
+              <a href="#" id="forgotPasswordLink" style="font-size:13px;color:var(--text-muted);text-decoration:underline;">Forgot password?</a>
+            </p>
           </form>
 
           <p id="authError" style="color:var(--danger);font-size:13px;margin-top:12px;display:none;"></p>
@@ -443,7 +448,16 @@
 <div class="toast" id="toast" role="status" aria-live="assertive"></div>
 
 <!-- ── JavaScript Modules ──────────────────────────────────── -->
+<!-- 1. Firebase config (must be first — initializes firebaseApp/Auth/Db/Storage) -->
 <script src="js/config.js"></script>
+<!-- 2. Firebase feature modules -->
+<script src="js/firebase/auth.js"></script>
+<script src="js/firebase/firestore.js"></script>
+<script src="js/firebase/storage.js"></script>
+<script src="js/firebase/index.js"></script>
+<!-- 3. App-level service layer -->
+<script src="js/services/firebaseService.js"></script>
+<!-- 4. App UI modules -->
 <script src="js/auth.js"></script>
 <script src="js/generate.js"></script>
 <script src="js/history.js"></script>

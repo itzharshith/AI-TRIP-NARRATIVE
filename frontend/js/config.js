@@ -1,42 +1,42 @@
 /**
- * Firebase Configuration
- * ──────────────────────────────────────────────────────────
- * SETUP INSTRUCTIONS:
- * 1. Go to https://console.firebase.google.com/
- * 2. Create a new project (or use existing)
- * 3. Go to Project Settings → General → Your apps → Add app (Web)
- * 4. Copy the firebaseConfig object and replace the values below
- * 5. In Firebase Console → Authentication → Sign-in method:
- *    - Enable "Google"
- *    - Enable "Email/Password"
- * 6. Add your admin email to backend/.env ADMIN_EMAILS
- * ──────────────────────────────────────────────────────────
+ * config.js — Firebase & App Configuration
+ * ─────────────────────────────────────────
+ * Initializes Firebase compat SDK (loaded via CDN in index.html).
+ * Exposes: firebaseApp, FIREBASE_CONFIG, API_BASE
  */
 
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_FIREBASE_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_APP_ID",
+  apiKey:            "AIzaSyDVKDd6r-96ewW3dBBxEmF7VsvONifazBs",
+  authDomain:        "ai-trip-narrative-generator.firebaseapp.com",
+  projectId:         "ai-trip-narrative-generator",
+  storageBucket:     "ai-trip-narrative-generator.firebasestorage.app",
+  messagingSenderId: "70632204810",
+  appId:             "1:70632204810:web:da3e6a8fb1efb9741b8df3",
+  measurementId:     "G-Z1CDCVMX8K",
 };
 
-// Backend API base URL — update if you deploy to a different host
+// Backend API base URL
 const API_BASE = 'http://localhost:3001/api';
 
-// Initialize Firebase
-let firebaseApp = null;
+// ── Initialize Firebase ──────────────────────────────────────
+let firebaseApp  = null;
+let firebaseAuth = null;
+let firebaseDb   = null;   // Firestore
+let firebaseStorage = null;
+
 try {
-  if (FIREBASE_CONFIG.apiKey !== 'YOUR_FIREBASE_API_KEY') {
-    firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
-    console.log('✅ Firebase initialized');
-  } else {
-    console.warn(
-      '⚠️  Firebase not configured. Open frontend/js/config.js and fill in your Firebase project details.\n' +
-      '   Admin features will be unavailable until Firebase is set up.'
-    );
-  }
+  firebaseApp     = firebase.initializeApp(FIREBASE_CONFIG);
+  firebaseAuth    = firebase.auth();
+  firebaseDb      = firebase.firestore();
+  firebaseStorage = firebase.storage();
+
+  // Firestore settings
+  firebaseDb.settings({ ignoreUndefinedProperties: true });
+
+  // Enable Auth persistence across page reloads
+  firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+  console.log('✅ Firebase initialized — project: ai-trip-narrative-generator');
 } catch (e) {
-  console.error('Firebase init error:', e);
+  console.error('❌ Firebase init error:', e.message);
 }

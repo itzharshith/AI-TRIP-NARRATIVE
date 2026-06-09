@@ -37,7 +37,7 @@ window.Admin = (() => {
       try {
         await Auth.signInWithGoogle();
       } catch (err) {
-        showAuthError(friendlyAuthError(err.code));
+        showAuthError(err.message || 'Google sign-in failed.');
       }
     });
 
@@ -60,14 +60,37 @@ window.Admin = (() => {
       try {
         await Auth.signInWithEmail(email, password);
       } catch (err) {
-        showAuthError(friendlyAuthError(err.code));
+        showAuthError(err.message || 'Sign-in failed.');
         btn.disabled = false;
         btn.textContent = 'Sign In';
       }
     });
 
+    // Forgot Password
+    document.getElementById('forgotPasswordLink')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      clearAuthError();
+      const email = document.getElementById('adminEmail').value.trim();
+      if (!email) { showAuthError('Enter your email above first.'); return; }
+      try {
+        await Auth.sendPasswordReset(email);
+        showAuthError('✅ Password reset email sent! Check your inbox.');
+      } catch (err) {
+        showAuthError(err.message || 'Failed to send reset email.');
+      }
+    });
+
     // Export CSV
-    document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
+    document.getElementById('exportCsvBtn').addEventListener('click', async () => {
+      if (window.AppService) {
+        showToast('Preparing CSV export…', 'info');
+        const { error } = await AppService.exportCsv();
+        if (error) showToast(`Export failed: ${error}`, 'error');
+        else       showToast('CSV downloaded!', 'success');
+      } else {
+        exportCsv();
+      }
+    });
 
     // Search + Filter
     let searchTimer;
@@ -98,30 +121,34 @@ window.Admin = (() => {
     tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;"><div class="skeleton" style="height:20px;border-radius:4px;"></div></td></tr>`;
 
     try {
-      idToken = await Auth.getIdToken();
-      if (!idToken) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--danger)">Not authenticated. Please sign in.</td></tr>`;
-        return;
+      // Use AppService if available (preferred — handles auth token automatically)
+      let json;
+      if (window.AppService) {
+        const { data, error } = await AppService.getAdminData({
+          page, limit: 20,
+          search: adminSearch, tone: adminTone, rating: adminRating,
+        });
+        if (error) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--danger)">${error}</td></tr>`;
+          return;
+        }
+        json = data;
+      } else {
+        // Fallback: direct fetch with manual token
+        idToken = await Auth.getIdToken();
+        if (!idToken) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--danger)">Not authenticated. Please sign in.</td></tr>`;
+          return;
+        }
+        const params = new URLSearchParams({ page, limit: 20, search: adminSearch, tone: adminTone, rating: adminRating });
+        const res = await fetch(`${API_BASE}/admin/data?${params}`, { headers: { Authorization: `Bearer ${idToken}` } });
+        if (res.status === 403) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--danger)">Access denied. Your email is not in the admin list.</td></tr>`;
+          return;
+        }
+        if (!res.ok) throw new Error((await res.json()).error || 'Request failed');
+        json = await res.json();
       }
-
-      const params = new URLSearchParams({
-        page, limit: 20,
-        search: adminSearch,
-        tone: adminTone,
-        rating: adminRating,
-      });
-
-      const res = await fetch(`${API_BASE}/admin/data?${params}`, {
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-
-      if (res.status === 403) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--danger)">Access denied. Your email is not in the admin list.</td></tr>`;
-        return;
-      }
-      if (!res.ok) throw new Error((await res.json()).error || 'Request failed');
-
-      const json = await res.json();
       document.getElementById('adminRecordCount').textContent =
         `${json.pagination.total} record${json.pagination.total !== 1 ? 's' : ''}`;
 
@@ -199,12 +226,18 @@ window.Admin = (() => {
     if (!confirm(`Delete narrative #${id}? This cannot be undone.`)) return;
 
     try {
-      idToken = await Auth.getIdToken();
-      const res = await fetch(`${API_BASE}/admin/data/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-      if (!res.ok) throw new Error((await res.json()).error || 'Delete failed');
+      let error = null;
+      if (window.AppService) {
+        ({ error } = await AppService.deleteRecord(id));
+      } else {
+        idToken = await Auth.getIdToken();
+        const res = await fetch(`${API_BASE}/admin/data/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        if (!res.ok) error = ((await res.json()).error || 'Delete failed');
+      }
+      if (error) throw new Error(error);
       showToast(`Record #${id} deleted.`, 'success');
       loadAdminData(adminPage);
     } catch (err) {

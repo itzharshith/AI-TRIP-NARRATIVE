@@ -1,112 +1,100 @@
 /**
- * auth.js — Firebase Authentication
- * Handles Google Sign-In, Email/Password Sign-In, and Sign-Out.
- * Exposes: window.Auth { currentUser, getIdToken, isFirebaseReady }
+ * auth.js — App-level Auth Bridge
+ * ─────────────────────────────────
+ * Bridges window.FirebaseAuth (firebase/auth.js) to the rest of the app.
+ * Keeps the original window.Auth interface intact for backward compatibility
+ * while adding signup, password reset, and richer error handling.
+ *
+ * Exposes: window.Auth (backward compat) — delegates to window.FirebaseAuth
  */
 
+// ── Backward-compat: window.Auth ───────────────────────────────
 window.Auth = (() => {
-  let currentUser = null;
-  let authInitialized = false;
+  const _fa = () => window.FirebaseAuth;
 
   function isFirebaseReady() {
-    return !!firebaseApp;
+    return !!(firebaseApp && window.FirebaseAuth);
   }
 
-  // ── Auth State Change Listener ──────────────────────────
-  if (isFirebaseReady()) {
-    const auth = firebase.auth();
-
-    auth.onAuthStateChanged((user) => {
-      currentUser = user;
-      authInitialized = true;
-      updateSidebarUser(user);
-
-      // If we're on the admin view, refresh admin panel state
-      if (window.Admin && typeof window.Admin.onAuthChange === 'function') {
-        window.Admin.onAuthChange(user);
-      }
-    });
-  } else {
-    authInitialized = true;
-  }
-
-  // ── Get Firebase ID Token (for backend auth) ────────────
-  async function getIdToken() {
-    if (!currentUser) return null;
-    try {
-      return await currentUser.getIdToken(/* forceRefresh= */ false);
-    } catch (e) {
-      console.error('Failed to get ID token:', e);
-      return null;
-    }
-  }
-
-  // ── Google Sign-In ──────────────────────────────────────
-  async function signInWithGoogle() {
-    if (!isFirebaseReady()) {
-      showToast('Firebase not configured. Check frontend/js/config.js', 'error');
-      return;
-    }
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    try {
-      await firebase.auth().signInWithPopup(provider);
-    } catch (err) {
-      console.error('Google sign-in error:', err);
-      throw err;
-    }
-  }
-
-  // ── Email / Password Sign-In ────────────────────────────
-  async function signInWithEmail(email, password) {
-    if (!isFirebaseReady()) {
-      showToast('Firebase not configured. Check frontend/js/config.js', 'error');
-      return;
-    }
-    try {
-      await firebase.auth().signInWithEmailAndPassword(email, password);
-    } catch (err) {
-      console.error('Email sign-in error:', err);
-      throw err;
-    }
-  }
-
-  // ── Sign Out ────────────────────────────────────────────
-  async function signOut() {
-    if (!isFirebaseReady()) return;
-    try {
-      await firebase.auth().signOut();
-      showToast('Signed out successfully', 'info');
-    } catch (err) {
-      console.error('Sign-out error:', err);
-    }
-  }
-
-  // ── Update Sidebar User Display ─────────────────────────
+  // ── Sidebar user display ────────────────────────────────────
   function updateSidebarUser(user) {
     const userInfo   = document.getElementById('userInfo');
     const userAvatar = document.getElementById('userAvatar');
     const userName   = document.getElementById('userName');
+    if (!userInfo) return;
 
     if (user) {
       userInfo.style.display = 'flex';
-      userName.textContent = user.displayName || user.email || 'Admin';
+      userName.textContent   = user.displayName || user.email || 'Admin';
       if (user.photoURL) {
-        userAvatar.innerHTML = `<img src="${user.photoURL}" alt="Avatar">`;
+        userAvatar.innerHTML = `<img src="${user.photoURL}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
       } else {
         userAvatar.textContent = (user.displayName || user.email || 'A')[0].toUpperCase();
       }
     } else {
       userInfo.style.display = 'none';
-      userAvatar.textContent = '👤';
-      userName.textContent = '';
+      if (userAvatar) userAvatar.textContent = '👤';
+      if (userName)  userName.textContent    = '';
     }
   }
 
-  // ── Wire Logout Button ──────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('logoutBtn')?.addEventListener('click', signOut);
-  });
+  // ── Register state listener ─────────────────────────────────
+  if (isFirebaseReady()) {
+    _fa().onAuthChange((user) => {
+      updateSidebarUser(user);
+      // Admin panel state
+      if (window.Admin && typeof window.Admin.onAuthChange === 'function') {
+        window.Admin.onAuthChange(user);
+      }
+    });
+  }
 
-  return { get currentUser() { return currentUser; }, getIdToken, signInWithGoogle, signInWithEmail, signOut, isFirebaseReady };
+  // ── Public API (backward compat) ────────────────────────────
+  return {
+    get currentUser() { return _fa()?.currentUser ?? null; },
+
+    isFirebaseReady,
+
+    async getIdToken() {
+      return (await _fa()?.getIdToken()) ?? null;
+    },
+
+    async signInWithGoogle() {
+      if (!isFirebaseReady()) { showToast('Firebase not configured.', 'error'); return; }
+      const { user, error } = await _fa().signInWithGoogle();
+      if (error) throw new Error(error);
+      return user;
+    },
+
+    async signInWithEmail(email, password) {
+      if (!isFirebaseReady()) { showToast('Firebase not configured.', 'error'); return; }
+      const { user, error } = await _fa().signInWithEmail(email, password);
+      if (error) throw new Error(error);
+      return user;
+    },
+
+    async signUp(email, password, displayName) {
+      if (!isFirebaseReady()) { showToast('Firebase not configured.', 'error'); return; }
+      const { user, error } = await _fa().signUp(email, password, displayName);
+      if (error) throw new Error(error);
+      return user;
+    },
+
+    async sendPasswordReset(email) {
+      if (!isFirebaseReady()) { showToast('Firebase not configured.', 'error'); return; }
+      const { error } = await _fa().sendPasswordReset(email);
+      if (error) throw new Error(error);
+    },
+
+    async signOut() {
+      if (!isFirebaseReady()) return;
+      const { error } = await _fa().signOut();
+      if (!error) showToast('Signed out successfully', 'info');
+    },
+  };
 })();
+
+// ── Wire Logout Button ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('logoutBtn')?.addEventListener('click', () => Auth.signOut());
+});

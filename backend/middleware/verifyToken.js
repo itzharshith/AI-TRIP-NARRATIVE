@@ -1,38 +1,22 @@
-const admin = require('firebase-admin');
-const path = require('path');
-const fs = require('fs');
+/**
+ * middleware/verifyToken.js — Firebase Token Verification Middleware
+ * ───────────────────────────────────────────────────────────────────
+ * Uses the centralized Firebase Admin SDK from firebase/admin.js.
+ * Verifies the Bearer token and checks the admin email allow-list.
+ */
 
-// Initialize Firebase Admin (only once)
-if (!admin.apps.length) {
-  const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
-    ? path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
-    : path.join(__dirname, '../firebase-service-account.json');
-
-  if (fs.existsSync(serviceAccountPath)) {
-    const serviceAccount = require(serviceAccountPath);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    console.log('✅ Firebase Admin SDK initialized');
-  } else {
-    // Dev mode: initialize without credentials (token verification will fail gracefully)
-    console.warn(
-      '⚠️  firebase-service-account.json not found.\n' +
-      '   Admin routes will return 503 until Firebase is configured.\n' +
-      '   See README.md for setup instructions.'
-    );
-  }
-}
+const firebaseAdmin = require('../firebase/admin');
 
 /**
- * Express middleware that verifies a Firebase ID token from the
- * Authorization: Bearer <token> header and checks if the user's
- * email is in the ADMIN_EMAILS allow-list.
+ * Express middleware: verify Firebase ID token + admin email check.
+ *
+ * Expects: Authorization: Bearer <firebase-id-token>
+ * Sets:    req.user = decoded token on success
  */
 async function verifyToken(req, res, next) {
-  if (!admin.apps.length) {
+  if (!firebaseAdmin.isReady) {
     return res.status(503).json({
-      error: 'Firebase Admin not configured. See backend/.env.example for setup.',
+      error: 'Firebase Admin not configured. See backend/firebase-service-account.json setup.',
     });
   }
 
@@ -42,27 +26,22 @@ async function verifyToken(req, res, next) {
   }
 
   const token = authHeader.split('Bearer ')[1];
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = decodedToken;
+  const { user, error } = await firebaseAdmin.verifyIdToken(token);
 
-    // Check admin email allow-list
-    const adminEmails = (process.env.ADMIN_EMAILS || '')
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (adminEmails.length > 0 && !adminEmails.includes(decodedToken.email?.toLowerCase())) {
-      return res.status(403).json({
-        error: 'Access denied. Your account is not in the admin list.',
-      });
-    }
-
-    next();
-  } catch (err) {
-    console.error('Token verification failed:', err.message);
+  if (error) {
+    console.error('Token verification failed:', error);
     return res.status(401).json({ error: 'Invalid or expired token.' });
   }
+
+  // Check admin email allow-list
+  if (!firebaseAdmin.isAdminEmail(user.email)) {
+    return res.status(403).json({
+      error: 'Access denied. Your account is not in the admin list.',
+    });
+  }
+
+  req.user = user;
+  next();
 }
 
 module.exports = { verifyToken };
