@@ -158,7 +158,10 @@ router.post('/', async (req, res) => {
     console.warn(`[generate] Quality gate not met — proceeding with best result.`);
   }
 
+  console.log('[generate] Narrative generation completed');
+
   try {
+    console.log('[generate] Narrative save started');
     const id = await db.insertGeneration({
       driverName, 
       route: finalRoute,
@@ -178,6 +181,7 @@ router.post('/', async (req, res) => {
       userId,
     });
 
+    console.log('[generate] Narrative saved successfully');
     console.log(`[generate] Saved — id=${id}, title="${title}", words=${qualityInfo.words}, chars=${qualityInfo.chars}, userId=${userId || 'null'}`);
 
     return res.json({

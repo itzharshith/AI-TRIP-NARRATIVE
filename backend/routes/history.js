@@ -33,6 +33,7 @@ router.get('/', async (req, res) => {
   console.log(`[history] GET / page=${page} limit=${limit} search="${search}"`);
 
   try {
+    console.log('[history] Fetching narratives for user');
     const { data, total } = await db.getGenerations({ page, limit, search });
     console.log(`[history] Fetched ${data.length} records (total=${total})`);
 
@@ -58,8 +59,10 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
+    console.log(`[history] Fetching narrative by ID: ${req.params.id}`);
     const row = await db.getGeneration(Number(req.params.id));
     if (!row) return res.status(404).json({ error: 'Generation not found.' });
+    console.log('[history] Narrative found');
     console.log(`[history] GET /${req.params.id} OK`);
     res.json(row);
   } catch (err) {

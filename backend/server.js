@@ -14,6 +14,14 @@ const feedbackRoute = require('./routes/feedback');
 const analyticsRoute = require('./routes/analytics');
 const adminRoute    = require('./routes/admin');
 const suggestRoute  = require('./routes/suggest');
+const exploreRoute  = require('./routes/explore');
+const ratingsRoute  = require('./routes/ratings');
+const reportsRoute  = require('./routes/reports');
+const wishlistRoute = require('./routes/wishlist');
+const userRoute     = require('./routes/user');
+const photosRoute   = require('./routes/photos');
+const aiPhotoRoute  = require('./routes/ai-photo');
+const { verifyToken } = require('./middleware/verifyToken');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -40,15 +48,29 @@ app.use('/api/feedback',      feedbackRoute);
 app.use('/api/analytics',     analyticsRoute);
 app.use('/api/admin',         adminRoute);
 app.use('/api/suggest-title', suggestRoute);
+app.use('/api/explore',       exploreRoute);
+app.use('/api/ratings',       ratingsRoute);
+app.use('/api/reports',       reportsRoute);
+app.use('/api/wishlist',      wishlistRoute);
+app.use('/api/user',          verifyToken, userRoute);
+app.use('/api/photos',        photosRoute);
+app.use('/api/ai-photo',      aiPhotoRoute);
 
 // Health check
-app.get('/api/health', (_req, res) => {
-  const { isReady } = require('./db/mongodb');
+app.get('/api/health', async (_req, res) => {
+  let dbStatus = 'Turso ⚠️ not connected';
+  try {
+    const { execute } = require('./db/turso');
+    await execute('SELECT 1');
+    dbStatus = 'Turso DB ✅';
+  } catch (err) {
+    dbStatus = `Turso DB ⚠️ error: ${err.message}`;
+  }
   res.json({
     status:    'ok',
     app:       'Manivtha AI Narrative Generator',
     version:   '2.0.0',
-    database:  isReady() ? 'MongoDB Atlas ✅' : 'MongoDB ⚠️ not connected',
+    database:  dbStatus,
     timestamp: new Date().toISOString(),
   });
 });
@@ -67,20 +89,19 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// ── Start Server (init MongoDB first, then listen) ──────────
+// ── Start Server (init Turso first, then listen) ──────────
 db.init().then(() => {
   app.listen(PORT, () => {
-    const dbName = process.env.MONGODB_DB_NAME || 'ainarrative';
     console.log('\n╔══════════════════════════════════════════════╗');
     console.log('║   Manivtha AI Trip Narrative Generator       ║');
     console.log('║   Manivtha Tours & Travels — 2026            ║');
     console.log('╠══════════════════════════════════════════════╣');
     console.log(`║   🚀 Server : http://localhost:${PORT}          ║`);
-    console.log(`║   🍃 DB     : MongoDB Atlas (${dbName})  ║`);
+    console.log('║   🛢️   DB     : Turso (LibSQL)               ║');
     console.log('╚══════════════════════════════════════════════╝\n');
   });
 }).catch((err) => {
-  console.error('❌ Failed to initialize MongoDB:', err.message);
-  console.error('   → Check your MONGODB_URI in backend/.env');
+  console.error('❌ Failed to initialize Turso:', err.message);
+  console.error('   → Check your TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in backend/.env');
   process.exit(1);
 });

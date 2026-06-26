@@ -52,8 +52,58 @@ function ensureInitialized() {
   }
   _initialized = true;
 }
+async function seedAdminAllowlist() {
+  if (!admin.apps.length) return;
+  const db = admin.firestore();
+  
+  const admins = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+    
+  for (const email of admins) {
+    try {
+      const docRef = db.collection('admins').doc(email);
+      const doc = await docRef.get();
+      if (!doc.exists) {
+        console.log(`[firebase/admin] Seeding admin allowlist for ${email}`);
+        await docRef.set({
+          email: email,
+          role: 'admin',
+          enabled: true,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    } catch (e) {
+      console.warn(`[firebase/admin] Failed to seed admin email ${email}:`, e.message);
+    }
+  }
+}
+
+async function verifyDevUsers() {
+  if (!admin.apps.length) return;
+  const auth = admin.auth();
+  const emails = ['charan@example.com', 'driver@manivtha.com'];
+  for (const email of emails) {
+    try {
+      const userRecord = await auth.getUserByEmail(email);
+      const updates = { emailVerified: true };
+      if (email === 'driver@manivtha.com') {
+        updates.password = 'password123';
+      }
+      console.log(`[firebase/admin] Updating dev user ${email} in Firebase Auth.`);
+      await auth.updateUser(userRecord.uid, updates);
+    } catch (e) {
+      console.warn(`[firebase/admin] Could not verify/update dev user ${email}:`, e.message);
+    }
+  }
+}
 
 ensureInitialized();
+if (admin.apps.length) {
+  seedAdminAllowlist().catch(e => console.error('[firebase/admin] Allowlist seeding error:', e));
+  verifyDevUsers().catch(e => console.error('[firebase/admin] Dev users verification error:', e));
+}
 
 // ── Exports ─────────────────────────────────────────────────────
 module.exports = {
@@ -96,6 +146,30 @@ module.exports = {
       .split(',')
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean);
-    return admins.length === 0 || admins.includes((email || '').toLowerCase());
+    return admins.includes((email || '').toLowerCase());
   },
+
+  /**
+   * Check dynamically if email is an allowed admin via Firestore allowlist collection,
+   * falling back to the static ADMIN_EMAILS environment check.
+   * @param {string} email
+   * Returns: Promise<boolean>
+   */
+  async isAllowedAdmin(email) {
+    if (!admin.apps.length || !email) return false;
+    try {
+      const emailLower = email.toLowerCase();
+      const doc = await admin.firestore().collection('admins').doc(emailLower).get();
+      if (doc.exists) {
+        const data = doc.data();
+        if ((data.role === 'admin' || data.role === 'Admin') && data.enabled === true) {
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn('[firebase/admin] Firestore allowlist check error:', e.message);
+    }
+    // Fallback to static check
+    return this.isAdminEmail(email);
+  }
 };

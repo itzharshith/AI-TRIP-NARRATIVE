@@ -12,16 +12,32 @@ window.Admin = (() => {
   let idToken = null;
 
   // ── Auth Change (called by auth.js) ─────────────────────
-  function onAuthChange(user) {
+  async function onAuthChange(user) {
     const authWall    = document.getElementById('authWall');
     const adminContent = document.getElementById('adminContent');
 
     if (user) {
-      authWall.style.display = 'none';
-      adminContent.style.display = 'block';
-      // Only load if admin view is currently active
-      if (document.getElementById('view-admin').classList.contains('active')) {
-        loadAdminData();
+      try {
+        const token = await Auth.getIdToken();
+        const res = await fetch(`${API_BASE}/admin/verify`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          authWall.style.display = 'none';
+          adminContent.style.display = 'block';
+          // Only load if admin view is currently active
+          if (document.getElementById('view-admin').classList.contains('active')) {
+            loadAdminData();
+          }
+        } else {
+          authWall.style.display = 'flex';
+          adminContent.style.display = 'none';
+          showAuthError('Access denied. Insufficient permissions.');
+        }
+      } catch (err) {
+        authWall.style.display = 'flex';
+        adminContent.style.display = 'none';
+        showAuthError('Error verifying permissions.');
       }
     } else {
       authWall.style.display = 'flex';
@@ -31,16 +47,6 @@ window.Admin = (() => {
 
   // ── Wire Auth Buttons ────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
-    // Google Sign-In
-    document.getElementById('googleSignInBtn').addEventListener('click', async () => {
-      clearAuthError();
-      try {
-        await Auth.signInWithGoogle();
-      } catch (err) {
-        showAuthError(err.message || 'Google sign-in failed.');
-      }
-    });
-
     // Email/Password Sign-In
     document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
       e.preventDefault();

@@ -260,12 +260,6 @@
 <div class="auth-panel">
   <div class="auth-logo">Manivtha Tours</div>
 
-  <!-- Tabs -->
-  <div class="tabs" id="tabBar">
-    <button class="tab-btn active" id="tabSignIn" onclick="switchTab('signin')">Sign In</button>
-    <button class="tab-btn"        id="tabSignUp" onclick="switchTab('signup')">Sign Up</button>
-  </div>
-
   <!-- ── SIGN IN ── -->
   <div class="form-panel active" id="panelSignIn">
     <h1 class="form-title">Welcome back</h1>
@@ -276,17 +270,6 @@
       <span id="signinErrorMsg"></span>
     </div>
 
-    <button class="google-btn" id="googleBtn" onclick="handleGoogleSignIn()" aria-label="Sign in with Google">
-      <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true">
-        <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-        <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-        <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
-        <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.31z"/>
-      </svg>
-      Continue with Google
-    </button>
-
-    <div class="divider">or sign in with email</div>
 
     <form id="signinForm" onsubmit="handleEmailSignIn(event)" novalidate>
       <div class="field">
@@ -316,67 +299,10 @@
         <div class="spinner" id="signinSpinner"></div>
       </button>
     </form>
-  </div>
 
-  <!-- ── SIGN UP ── -->
-  <div class="form-panel" id="panelSignUp">
-    <h2 class="form-title">Create your account</h2>
-    <p class="form-sub">Join Manivtha Tours and start generating AI travel stories.</p>
-
-    <div class="error-alert" id="signupError">
-      <span class="alert-icon">error</span>
-      <span id="signupErrorMsg"></span>
-    </div>
-    <div class="success-alert" id="signupSuccess">
-      <span class="alert-icon">check_circle</span>
-      <span>Account created! Signing you in…</span>
-    </div>
-
-    <button class="google-btn" onclick="handleGoogleSignIn()" aria-label="Sign up with Google">
-      <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true">
-        <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-        <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-        <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
-        <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.31z"/>
-      </svg>
-      Sign up with Google
-    </button>
-
-    <div class="divider">or sign up with email</div>
-
-    <form id="signupForm" onsubmit="handleSignUp(event)" novalidate>
-      <div class="field">
-        <label for="signupName">Full name</label>
-        <div class="field-wrap">
-          <span class="field-icon">person</span>
-          <input type="text" id="signupName" placeholder="Your full name"
-                 autocomplete="name" required>
-        </div>
-      </div>
-      <div class="field">
-        <label for="signupEmail">Email address</label>
-        <div class="field-wrap">
-          <span class="field-icon">mail</span>
-          <input type="email" id="signupEmail" placeholder="you@example.com"
-                 autocomplete="email" required>
-        </div>
-      </div>
-      <div class="field">
-        <label for="signupPassword">Password <span style="color:var(--outline);font-weight:400;">(min. 6 chars)</span></label>
-        <div class="field-wrap">
-          <span class="field-icon">lock</span>
-          <input type="password" id="signupPassword" placeholder="Create a password"
-                 autocomplete="new-password" required minlength="6">
-          <button type="button" class="pwd-toggle"
-                  onclick="togglePwd('signupPassword',this)"
-                  aria-label="Show or hide password">visibility</button>
-        </div>
-      </div>
-      <button type="submit" class="submit-btn" id="signupBtn">
-        <span id="signupBtnText">Create Account</span>
-        <div class="spinner" id="signupSpinner"></div>
-      </button>
-    </form>
+    <p class="text-center text-xs text-outline mt-8" style="color: var(--outline); font-size: 13px; margin-top: 32px; line-height: 1.5;">
+      🔒 Employee account registration is restricted. If you need a new account, please contact your system administrator.
+    </p>
   </div>
 
   <!-- ── FORGOT PASSWORD ── -->
@@ -606,9 +532,6 @@ function setBusy(btnId, spinnerId, textId, busy, label) {
   btn.disabled = busy;
   if (sp) sp.style.display = busy ? 'inline-block' : 'none';
   if (tx) tx.textContent   = busy ? 'Please wait…' : label;
-  if (document.getElementById('googleBtn')) {
-    document.getElementById('googleBtn').disabled = busy;
-  }
 }
 
 // ── Tab switching ─────────────────────────────────────────────
@@ -660,39 +583,6 @@ function redirectToApp() {
 //  AUTH HANDLERS
 // ═══════════════════════════════════════════════════════════════
 
-// ── Google Sign In ────────────────────────────────────────────
-async function handleGoogleSignIn() {
-  clearErrors();
-
-  if (!fbAuth) {
-    showError('signinError', 'signinErrorMsg', 'Authentication service is not available. Please refresh the page.');
-    return;
-  }
-
-  diag('info', 'Google Sign-In requested');
-
-  const googleBtns = document.querySelectorAll('.google-btn');
-  googleBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.7'; });
-
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-
-    diag('info', 'Opening Google sign-in popup…');
-    const cred = await fbAuth.signInWithPopup(provider);
-
-    if (cred.user) {
-      diag('info', 'Google sign-in successful: ' + cred.user.email);
-      redirectToApp();
-    }
-  } catch (e) {
-    diag('error', 'Google sign-in failed: ' + (e.code || e.message));
-    const msg = mapError(e.code, '');
-    if (msg) showError('signinError', 'signinErrorMsg', msg);
-  } finally {
-    googleBtns.forEach(b => { b.disabled = false; b.style.opacity = ''; });
-  }
-}
 
 // ── Email Sign In ─────────────────────────────────────────────
 async function handleEmailSignIn(e) {
@@ -839,7 +729,7 @@ async function handleForgot(e) {
           Enable Firebase Sign-In
         </h2>
         <p style="font-size:13px;color:#434653;margin:4px 0 0;">
-          Google Sign-In is not enabled yet. Follow these steps to fix it.
+          Email/Password Sign-In is not enabled yet. Follow these steps to fix it.
         </p>
       </div>
     </div>
@@ -866,18 +756,6 @@ async function handleForgot(e) {
                     display:flex;align-items:center;justify-content:center;
                     font-weight:700;font-size:13px;flex-shrink:0;">2</div>
         <div>
-          <div style="font-weight:600;font-size:14px;color:#191c1e;margin-bottom:4px;">Enable Google Sign-In</div>
-          <p style="font-size:13px;color:#434653;margin:0;line-height:1.6;">
-            Click <strong>Google</strong> → Toggle to <strong>Enabled</strong> → Add your support email → Save.
-          </p>
-        </div>
-      </li>
-
-      <li style="display:flex;gap:14px;align-items:flex-start;">
-        <div style="width:28px;height:28px;border-radius:50%;background:#003c90;color:#fff;
-                    display:flex;align-items:center;justify-content:center;
-                    font-weight:700;font-size:13px;flex-shrink:0;">3</div>
-        <div>
           <div style="font-weight:600;font-size:14px;color:#191c1e;margin-bottom:4px;">Enable Email/Password</div>
           <p style="font-size:13px;color:#434653;margin:0;line-height:1.6;">
             Click <strong>Email/Password</strong> → Toggle to <strong>Enabled</strong> → Save.
@@ -888,7 +766,7 @@ async function handleForgot(e) {
       <li style="display:flex;gap:14px;align-items:flex-start;">
         <div style="width:28px;height:28px;border-radius:50%;background:#003c90;color:#fff;
                     display:flex;align-items:center;justify-content:center;
-                    font-weight:700;font-size:13px;flex-shrink:0;">4</div>
+                    font-weight:700;font-size:13px;flex-shrink:0;">3</div>
         <div>
           <div style="font-weight:600;font-size:14px;color:#191c1e;margin-bottom:4px;">Add localhost as Authorized Domain</div>
           <p style="font-size:13px;color:#434653;margin:0 0 6px;line-height:1.6;">
@@ -916,9 +794,8 @@ async function handleForgot(e) {
     <!-- Screenshot hint -->
     <div style="background:#f2f4f6;border-radius:12px;padding:14px 16px;margin-bottom:20px;">
       <p style="font-size:12px;color:#434653;margin:0;line-height:1.6;">
-        💡 <strong>Tip:</strong> You need a Google account with access to the Firebase project
-        <strong>ai-trip-narrative-generator</strong>. The support email for Google Sign-In can be
-        any email you own.
+        💡 <strong>Tip:</strong> You need a Google/Firebase account with access to the Firebase project
+        <strong>ai-trip-narrative-generator</strong> to manage the authentication providers.
       </p>
     </div>
 

@@ -104,7 +104,7 @@ function attachFirestoreListener(userId) {
                 const tb = b.createdAt?.toMillis?.() || new Date(b.createdAt || 0).getTime();
                 return tb - ta;
               });
-            _narratives = data;
+            _narratives = data.map(normalizeNarrative);
             console.log(`[history] Listener (no-order fallback): ${data.length} narratives`);
             applySearchAndRender();
           },
@@ -139,7 +139,7 @@ function attachFirestoreListener(userId) {
         return;
       }
 
-      _narratives = data;
+      _narratives = data.map(normalizeNarrative);
       console.log(`[history] Real-time update: ${data.length} narratives`);
       applySearchAndRender();
     });
@@ -154,6 +154,7 @@ function applySearchAndRender() {
 
   // Always exclude soft-deleted records from display
   const active = _narratives.filter(r => !r.isDeleted);
+  active.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
   _filteredNarratives = q
     ? active.filter(r =>
@@ -405,7 +406,7 @@ window.openNarrativeModal = function (narrativeId) {
   // ── Social caption + hashtags ───────────────────────────────
   const socialCaption = rec.socialCaption || '';
   // Extract hashtags from the caption
-  const hashtags = socialCaption.match(/#[\w\u0900-\u097F]+/g) || [];
+  const hashtags = rec.hashtags || (socialCaption.match(/#[\w\u0900-\u097F]+/g) || []);
   const captionText = socialCaption.replace(/#[\w\u0900-\u097F]+/g, '').trim();
 
   // ── Rating stars ───────────────────────────────────────────────
@@ -434,12 +435,108 @@ window.openNarrativeModal = function (narrativeId) {
             <span class="material-symbols-outlined" style="font-size:18px;">play_circle</span> Listen
           </button>
           <button id="modalCopyBtn"
-                  class="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-all" title="Copy narrative">
+                  class="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant transition-all border border-outline-variant" title="Copy narrative">
             <span class="material-symbols-outlined">content_copy</span>
           </button>
         </div>
       </div>
 
+      <!-- ── Detail grid ─────────────────────────────────────────── -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-outline-variant/60">
+        <!-- Route / Vehicle / Dates info -->
+        <div class="space-y-4 md:col-span-1 bg-surface-container-low p-5 rounded-2xl border border-outline-variant/40">
+          <h4 class="font-label-md text-primary uppercase tracking-wider text-xs">Trip Summary</h4>
+          
+          <div class="space-y-3 font-body-md text-sm text-on-surface-variant">
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-primary text-lg">trip_origin</span>
+              <div>
+                <p class="font-bold text-xs text-outline">Route</p>
+                <p>${escHtml(rec.routeInfo?.route || rec.route || '—')}</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-primary text-lg">directions_car</span>
+              <div>
+                <p class="font-bold text-xs text-outline">Vehicle Info</p>
+                <p>${escHtml(rec.vehicleInfo?.type || rec.vehicleType || '—')} (${escHtml(rec.vehicleInfo?.driver || rec.driverName || '—')})</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-primary text-lg">calendar_today</span>
+              <div>
+                <p class="font-bold text-xs text-outline">Start & Reaching Dates</p>
+                <p>${tripDateFmt ? escHtml(tripDateFmt) : '—'}${rec.reachingDate && rec.reachingDate !== rec.tripDate ? ` to ${escHtml(fmtDate(rec.reachingDate))}` : ''}</p>
+              </div>
+            </div>
+            
+            ${rec.landmarks ? `
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-primary text-lg">place</span>
+              <div>
+                <p class="font-bold text-xs text-outline">Landmarks</p>
+                <p class="text-xs">${escHtml(rec.landmarks)}</p>
+              </div>
+            </div>` : ''}
+
+            ${rec.highlights ? `
+            <div class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-primary text-lg">star</span>
+              <div>
+                <p class="font-bold text-xs text-outline">Highlights</p>
+                <p class="text-xs">${escHtml(rec.highlights)}</p>
+              </div>
+            </div>` : ''}
+          </div>
+        </div>
+
+        <!-- Narrative body and social content -->
+        <div class="md:col-span-2 space-y-5">
+          <div>
+            <h4 class="font-label-md text-primary uppercase tracking-wider text-xs mb-2">Narrative Story</h4>
+            <div class="narrative-prose p-5 bg-surface-container-lowest rounded-2xl border border-outline-variant/60 max-h-72 overflow-y-auto shadow-inner text-sm font-body-md">
+              ${narrativeHtml || '<p class="text-on-surface-variant">No content generated.</p>'}
+            </div>
+          </div>
+
+          ${captionText ? `
+          <div>
+            <h4 class="font-label-md text-primary uppercase tracking-wider text-xs mb-2">Social Media Caption</h4>
+            <div class="p-4 bg-secondary-container/10 border border-secondary-container/20 rounded-2xl text-xs font-body-md text-on-surface-variant">
+              <p class="mb-2 whitespace-pre-wrap">${escHtml(captionText)}</p>
+              ${hashtags.length ? `
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                ${hashtags.map(h => `<span class="text-primary font-semibold hover:underline cursor-pointer">${escHtml(h)}</span>`).join(' ')}
+              </div>` : ''}
+            </div>
+          </div>` : ''}
+
+          ${rec.imagePrompt ? `
+          <div>
+            <h4 class="font-label-md text-primary uppercase tracking-wider text-xs mb-1">AI Image Generation Prompt</h4>
+            <p class="text-xs text-on-surface-variant bg-surface-container-low px-4 py-3 rounded-xl border border-outline-variant/40 italic font-body-md">
+              "${escHtml(rec.imagePrompt)}"
+            </p>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <!-- ── Trip Photo Gallery (loaded async) ──────────────── -->
+      <div id="modalPhotoSection" class="hidden pt-4 border-t border-outline-variant/60">
+        <div class="flex items-center justify-between mb-4">
+          <h4 class="font-label-md text-primary uppercase tracking-wider text-xs flex items-center gap-2">
+            <span class="material-symbols-outlined ms-filled" style="font-size:16px;color:#fe6f42;">photo_library</span>
+            Trip Photos
+          </h4>
+          <span class="text-xs text-on-surface-variant">Click to edit &amp; share on social</span>
+        </div>
+        <div id="modalPhotoGallery"
+             style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px;"></div>
+      </div>
+      
+    </div>`;
 
   // Wire modal buttons safely via addEventListener (no onclick attributes)
   document.getElementById('modalListenBtn')?.addEventListener('click', () => {
@@ -451,8 +548,48 @@ window.openNarrativeModal = function (narrativeId) {
       .catch(() => showToast('Copy failed.', 'error'));
   });
 
+  // Load photos for this narrative (uses sqliteId which is the legacyId)
+  const sqliteId = rec?.sqliteId || rec?.id;
+  if (sqliteId && window.loadNarrativePhotos) {
+    // Use a custom loader that targets the modal gallery
+    loadModalPhotos(sqliteId);
+  }
+
+  console.log('[history] Narrative details rendered');
   modal.classList.add('open');
 };
+
+// ── Load photos into the history detail modal ─────────────────
+async function loadModalPhotos(narrativeId) {
+  if (!narrativeId) return;
+  try {
+    const res  = await fetch(`${window.API_BASE || ''}/api/photos/${narrativeId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.photos || data.photos.length === 0) return;
+
+    const section = document.getElementById('modalPhotoSection');
+    const gallery = document.getElementById('modalPhotoGallery');
+    if (!section || !gallery) return;
+
+    section.classList.remove('hidden');
+    gallery.innerHTML = data.photos.map((p, i) => `
+      <div class="relative group rounded-xl overflow-hidden shadow cursor-pointer"
+           style="aspect-ratio:1; animation: thumbIn 0.3s ease ${i * 0.05}s forwards; opacity:0;">
+        <img src="${p.url}" alt="${p.filename}"
+             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
+        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+          <button onclick="openPhotoEditor('${p.url}', '${p.filename}', '${p.photoId}')"
+                  class="bg-white/90 text-primary p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-white transition-all">
+            <span class="material-symbols-outlined" style="font-size:14px;">tune</span> Edit
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.warn('[history] Could not load photos for modal:', err.message);
+  }
+}
 
 
 // ── Delete a narrative (soft-delete — record is preserved) ────────────────
@@ -604,22 +741,7 @@ async function fetchHistoryFallback() {
     const rows = json.records || json.data || [];
     console.log(`[history] REST fallback: received ${rows.length} records (total=${json.pagination?.total ?? '?'})`);
 
-    _narratives = rows.map(r => ({
-      id:          `sqlite-${r.id}`,
-      sqliteId:    r.id,
-      driverName:  r.driver_name,
-      route:       r.route,
-      landmarks:   r.landmarks,
-      highlights:  r.highlights,
-      tripDate:    r.trip_date,
-      vehicleType: r.vehicle_type,
-      tone:        r.tone,
-      title:       r.title,
-      narrative:   r.ai_response || r.narrative,
-      rating:      r.rating,
-      comment:     r.comment,
-      createdAt:   r.created_at,
-    }));
+    _narratives = rows.map(normalizeNarrative);
 
     applySearchAndRender();
   } catch (e) {

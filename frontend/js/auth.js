@@ -59,12 +59,6 @@ window.Auth = (() => {
       return (await _fa()?.getIdToken()) ?? null;
     },
 
-    async signInWithGoogle() {
-      if (!isFirebaseReady()) { showToast('Firebase not configured.', 'error'); return; }
-      const { user, error } = await _fa().signInWithGoogle();
-      if (error) throw new Error(error);
-      return user;
-    },
 
     async signInWithEmail(email, password) {
       if (!isFirebaseReady()) { showToast('Firebase not configured.', 'error'); return; }

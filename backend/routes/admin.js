@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 const { verifyToken } = require('../middleware/verifyToken');
+const { authorize } = require('../middleware/authorize');
 
-// All admin routes require Firebase auth token
+// All admin routes require Firebase auth token + Admin role verification
 router.use(verifyToken);
+router.use(authorize(['Admin']));
 
 /**
  * GET /api/admin/data
@@ -119,6 +121,176 @@ router.get('/verify', (req, res) => {
       picture: req.user.picture,
     },
   });
+});
+
+/**
+ * GET /api/admin/users
+ * Returns list of all registered users.
+ */
+router.get('/users', async (req, res) => {
+  try {
+    const users = await db.getUsers();
+    res.json(users);
+  } catch (err) {
+    console.error('[admin] GET /users error:', err);
+    res.status(500).json({ error: 'Failed to fetch user list.', detail: err.message });
+  }
+});
+
+/**
+ * PUT /api/admin/users/:uid/role
+ * Updates a user's role and permissions.
+ */
+router.put('/users/:uid/role', async (req, res) => {
+  const { uid } = req.params;
+  const { role } = req.body;
+  
+  if (!role || !['Admin', 'User'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid role. Must be Admin or User.' });
+  }
+
+  try {
+    const permissions = role === 'Admin' ? ['all'] : [];
+    await db.updateUserRoleAndPermissions(uid, role, permissions);
+    
+    // Log activity
+    await db.logActivity({
+      userId: req.user.uid,
+      action: 'Update User Role',
+      detail: `Changed role of user ${uid} to ${role}`
+    });
+    
+    res.json({ success: true, uid, role });
+  } catch (err) {
+    console.error(`[admin] PUT /users/${uid}/role error:`, err);
+    res.status(500).json({ error: 'Failed to update user role.', detail: err.message });
+  }
+});
+
+/**
+ * PUT /api/admin/users/:uid/status
+ * Updates a user's account status.
+ */
+router.put('/users/:uid/status', async (req, res) => {
+  const { uid } = req.params;
+  const { accountStatus } = req.body;
+  
+  if (!accountStatus || !['active', 'suspended', 'pending'].includes(accountStatus)) {
+    return res.status(400).json({ error: 'Invalid accountStatus. Must be active, suspended, or pending.' });
+  }
+
+  try {
+    await db.updateUserStatus(uid, accountStatus);
+    
+    // Log activity
+    await db.logActivity({
+      userId: req.user.uid,
+      action: 'Update User Status',
+      detail: `Changed status of user ${uid} to ${accountStatus}`
+    });
+    
+    res.json({ success: true, uid, accountStatus });
+  } catch (err) {
+    console.error(`[admin] PUT /users/${uid}/status error:`, err);
+    res.status(500).json({ error: 'Failed to update user status.', detail: err.message });
+  }
+});
+
+/**
+ * GET /api/admin/metrics
+ * Returns server and database health statistics.
+ */
+router.get('/metrics', async (req, res) => {
+  try {
+    const { total: narrativesCount } = await db.getGenerations({ limit: 1 });
+    const users = await db.getUsers();
+    const usersCount = users.length;
+    
+    res.json({
+      system: {
+        uptime: Math.floor(process.uptime()),
+        nodeVersion: process.version,
+        platform: process.platform,
+        memory: {
+          heapUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`,
+          rss: `${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`,
+        }
+      },
+      database: {
+        connected: true,
+        narrativesCount,
+        usersCount,
+      }
+    });
+  } catch (err) {
+    console.error('[admin] GET /metrics error:', err);
+    res.status(500).json({ error: 'Failed to fetch metrics.', detail: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/users
+ * Creates a new user in Firebase Auth and Turso database.
+ */
+router.post('/users', async (req, res) => {
+  const { displayName, email, password, role } = req.body;
+
+  if (!email || !password || !displayName) {
+    return res.status(400).json({ error: 'Email, password, and display name are required.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+  }
+
+  const targetRole = role === 'Admin' ? 'Admin' : 'User';
+
+  try {
+    const firebaseAdmin = require('../firebase/admin');
+    if (!firebaseAdmin.isReady || !firebaseAdmin.adminAuth) {
+      return res.status(503).json({ error: 'Firebase Admin Auth is not configured/ready.' });
+    }
+
+    // 1. Create user in Firebase Authentication
+    const userRecord = await firebaseAdmin.adminAuth.createUser({
+      email,
+      password,
+      displayName,
+      emailVerified: true // Set to true immediately so they can log in without verification link
+    });
+
+    // 2. Register/upsert user in the Turso database
+    await db.upsertUser({
+      uid: userRecord.uid,
+      email: userRecord.email,
+      displayName: userRecord.displayName,
+      photoURL: '',
+      provider: 'email',
+      emailVerified: true,
+      role: targetRole,
+      permissions: targetRole === 'Admin' ? ['all'] : []
+    });
+
+    // Log action
+    await db.logActivity({
+      userId: req.user.uid,
+      action: 'Create User',
+      detail: `Created user ${email} with role ${targetRole}`
+    });
+
+    res.status(201).json({
+      success: true,
+      user: {
+        uid: userRecord.uid,
+        email: userRecord.email,
+        displayName: userRecord.displayName,
+        role: targetRole
+      }
+    });
+  } catch (err) {
+    console.error('[admin] POST /users error:', err);
+    res.status(500).json({ error: 'Failed to create user.', detail: err.message });
+  }
 });
 
 module.exports = router;

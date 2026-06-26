@@ -151,12 +151,15 @@ async function ensureIndexes() {
   await narr.createIndex({ tone: 1 },       { name: 'tone_asc' });
   await narr.createIndex({ style: 1 },      { name: 'style_asc' });
   await narr.createIndex({ rating: 1 },     { name: 'rating_asc', sparse: true });
+  await narr.createIndex({ visibility: 1 }, { name: 'visibility_asc' });
+  await narr.createIndex({ wishlistCount: 1 }, { name: 'wishlistCount_asc' });
+  await narr.createIndex({ sharesCount: 1 }, { name: 'sharesCount_asc' });
 
   // Individual field indexes to support regex-based search
-  // (Text indexes are not supported with serverApi.strict: true in v1)
   await narr.createIndex({ driverName: 1 }, { name: 'driverName_asc' });
   await narr.createIndex({ route: 1 },      { name: 'route_asc' });
   await narr.createIndex({ title: 1 },      { name: 'title_asc' });
+  await narr.createIndex({ destination: 1 }, { name: 'destination_asc' });
 
 
   // ── users collection ──────────────────────────────────────────
@@ -167,6 +170,24 @@ async function ensureIndexes() {
   // ── settings collection ───────────────────────────────────────
   const settings = db.collection('settings');
   await settings.createIndex({ key: 1 }, { unique: true, name: 'settings_key_unique' });
+
+  // ── ratings collection ────────────────────────────────────────
+  const ratings = db.collection('ratings');
+  await ratings.createIndex({ narrativeId: 1, userId: 1 }, { unique: true, name: 'narrative_user_rating_unique' });
+  await ratings.createIndex({ narrativeId: 1 }, { name: 'narrativeId_asc' });
+  await ratings.createIndex({ createdAt: -1 }, { name: 'rating_createdAt_desc' });
+
+  // ── wishlist collection ───────────────────────────────────────
+  const wishlist = db.collection('wishlist');
+  await wishlist.createIndex({ userId: 1, narrativeId: 1 }, { unique: true, name: 'user_narrative_wishlist_unique' });
+  await wishlist.createIndex({ userId: 1 }, { name: 'wishlist_userId_asc' });
+  await wishlist.createIndex({ createdAt: -1 }, { name: 'wishlist_createdAt_desc' });
+
+  // ── reports collection ────────────────────────────────────────
+  const reports = db.collection('reports');
+  await reports.createIndex({ narrativeId: 1 }, { name: 'report_narrativeId_asc' });
+  await reports.createIndex({ status: 1 }, { name: 'report_status_asc' });
+  await reports.createIndex({ createdAt: -1 }, { name: 'report_createdAt_desc' });
 
   // ── counters collection ───────────────────────────────────────
   // (used for legacyId auto-increment; no special index needed beyond _id)

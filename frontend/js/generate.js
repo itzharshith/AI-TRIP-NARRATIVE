@@ -240,6 +240,23 @@ window.handleGenerate = async function (overrideTone = null) {
     // Go to step 3
     goToStep(3);
 
+    // Hide photo section initially (shows after upload completes)
+    const photoSection = document.getElementById('narrativePhotoSection');
+    if (photoSection) photoSection.classList.add('hidden');
+
+    // Upload photos non-blocking — links them to the narrative ID
+    if (window.photoFiles && window.photoFiles.length > 0) {
+      const photoCount = window.photoFiles.length;
+      showToast(`Uploading ${photoCount} photo${photoCount > 1 ? 's' : ''}…`, 'info', 2500);
+      window.uploadPhotos(json.id).then(results => {
+        if (results && results.length > 0) {
+          showToast(`📷 ${results.length} photo${results.length > 1 ? 's' : ''} uploaded successfully!`, 'success', 3000);
+        }
+      }).catch(err => {
+        console.warn('[generate] Photo upload failed (non-fatal):', err);
+      });
+    }
+
     // Load into TTS engine (does NOT auto-play) — uses BODY text only (no title duplication)
     const narrativeText = json.narrative || json.body || '';
     // Strip title from TTS text too, so it isn't read twice
@@ -272,6 +289,9 @@ window.handleGenerate = async function (overrideTone = null) {
 
 // ── Render Narrative to Step 3 ────────────────────────────────
 function renderNarrative(json) {
+  // Expose narrative data globally for AI editor & Social Post Studio
+  window._lastNarrativeData = json;
+
   const output = document.getElementById('narrativeOutput');
   const summaryEl = document.getElementById('narrativeSummary');
   const captionEl = document.getElementById('socialCaption');
@@ -353,6 +373,17 @@ window.resetWizard = function () {
   currentNarrativeId = null;
   selectedRating     = 0;
   lastFormData       = null;
+
+  // Clear photo state
+  if (window.photoFiles) {
+    window.photoFiles.forEach(p => { try { URL.revokeObjectURL(p.previewUrl); } catch(_) {} });
+    window.photoFiles  = [];
+    window.photoResults = [];
+  }
+  const grid = document.getElementById('photoThumbGrid');
+  if (grid) { grid.innerHTML = ''; grid.classList.add('hidden'); }
+  const counter = document.getElementById('photoCounter');
+  if (counter) counter.textContent = `0 / 20 photos`;
 
   // Clear form
   ['driverName','startingLocation','destination','tripTitle','landmarks','highlights','ratingComment'].forEach(id => {

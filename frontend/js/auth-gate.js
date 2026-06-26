@@ -92,6 +92,8 @@
     const userInfo   = document.getElementById('userInfo');
     const userAvatar = document.getElementById('userAvatar');
     const userName   = document.getElementById('userName');
+    const dropdownUserName = document.getElementById('dropdownUserName');
+    const dropdownUserEmail = document.getElementById('dropdownUserEmail');
 
     if (!userInfo) return;  // Not present on this page
 
@@ -101,6 +103,16 @@
       userName.textContent = user.displayName
         || user.email?.split('@')[0]
         || 'User';
+    }
+
+    if (dropdownUserName) {
+      dropdownUserName.textContent = user.displayName
+        || user.email?.split('@')[0]
+        || 'User';
+    }
+
+    if (dropdownUserEmail) {
+      dropdownUserEmail.textContent = user.email || '';
     }
 
     if (userAvatar) {
@@ -163,10 +175,7 @@
 
   // ── Wire logout button ───────────────────────────────────────
   function wireLogout() {
-    const btn = document.getElementById('logoutBtn');
-    if (!btn) return;
-
-    btn.addEventListener('click', async () => {
+    const handleLogout = async () => {
       console.log('[auth-gate] Signing out…');
       try {
         await firebaseAuth.signOut();
@@ -175,8 +184,129 @@
       } catch (e) {
         console.error('[auth-gate] Sign-out error:', e.message);
       }
+    };
+
+    const btn = document.getElementById('logoutBtn');
+    if (btn) btn.addEventListener('click', handleLogout);
+
+    const dropdownLogout = document.getElementById('dropdownLogoutBtn');
+    if (dropdownLogout) dropdownLogout.addEventListener('click', handleLogout);
+
+    console.log('[auth-gate] Logout buttons wired');
+  }
+
+  // ── Profile Dropdown and Editing ─────────────────────────────
+  window.toggleProfileDropdown = function(event) {
+    if (event) event.stopPropagation();
+    const dropdown = document.getElementById('profileDropdown');
+    if (dropdown) {
+      dropdown.classList.toggle('hidden');
+    }
+  };
+
+  window.openEditProfileModal = function(event) {
+    if (event) event.stopPropagation();
+    const dropdown = document.getElementById('profileDropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+
+    const modal = document.getElementById('editProfileModal');
+    if (modal) {
+      modal.classList.add('open');
+      const nameInput = document.getElementById('editDisplayName');
+      const photoInput = document.getElementById('editPhotoURL');
+      if (nameInput && window.currentUser) {
+        nameInput.value = window.currentUser.displayName || '';
+      }
+      if (photoInput && window.currentUser) {
+        photoInput.value = window.currentUser.photoURL || '';
+      }
+    }
+  };
+
+  window.closeEditProfileModal = function(event) {
+    if (event) event.stopPropagation();
+    const modal = document.getElementById('editProfileModal');
+    if (modal) {
+      modal.classList.remove('open');
+    }
+  };
+
+  // Close dropdown on click outside
+  document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('profileDropdown');
+    const userInfo = document.getElementById('userInfo');
+    if (dropdown && !dropdown.classList.contains('hidden')) {
+      if (!userInfo || !userInfo.contains(event.target)) {
+        dropdown.classList.add('hidden');
+      }
+    }
+  });
+
+  function wireProfileForm() {
+    const form = document.getElementById('editProfileForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const nameInput = document.getElementById('editDisplayName');
+      const photoInput = document.getElementById('editPhotoURL');
+      const displayName = nameInput ? nameInput.value.trim() : '';
+      const photoURL = photoInput ? photoInput.value.trim() : '';
+
+      if (!window.currentUser) {
+        if (typeof showToast === 'function') showToast('You must be signed in.', 'error');
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.innerHTML : 'Save Changes';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2 align-middle"></span> Saving...';
+      }
+
+      try {
+        await window.currentUser.updateProfile({
+          displayName: displayName,
+          photoURL: photoURL
+        });
+
+        const response = await window.authFetch('/api/user/profile', {
+          method: 'PUT',
+          body: JSON.stringify({
+            displayName: displayName,
+            photoURL: photoURL
+          })
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to sync profile with database.');
+        }
+
+        // Force reload / update local UI
+        updateNavUser(window.currentUser);
+        window.closeEditProfileModal();
+
+        if (typeof showToast === 'function') {
+          showToast('Profile updated successfully!', 'success');
+        } else {
+          alert('Profile updated successfully!');
+        }
+      } catch (error) {
+        console.error('[auth-gate] Error updating profile:', error);
+        if (typeof showToast === 'function') {
+          showToast(error.message || 'Error updating profile.', 'error');
+        } else {
+          alert('Error updating profile: ' + error.message);
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
+      }
     });
-    console.log('[auth-gate] Logout button wired');
   }
 
   // ── Entry point ──────────────────────────────────────────────
@@ -193,6 +323,7 @@
     }
 
     wireLogout();
+    wireProfileForm();
     attachAuthListener();
   }
 

@@ -90,19 +90,6 @@ window.FirebaseAuth = (() => {
     }
   }
 
-  // ── Google OAuth Sign In ───────────────────────────────────
-  async function signInWithGoogle() {
-    _assertFirebase();
-    try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const credential = await firebaseAuth.signInWithPopup(provider);
-      return { user: credential.user, error: null };
-    } catch (e) {
-      if (e.code === 'auth/popup-closed-by-user') return { user: null, error: null }; // user cancelled
-      return { user: null, error: _mapAuthError(e.code) };
-    }
-  }
 
   // ── Password Reset ─────────────────────────────────────────
   async function sendPasswordReset(email) {
@@ -204,7 +191,6 @@ window.FirebaseAuth = (() => {
     getIdToken,
     signUp,
     signInWithEmail,
-    signInWithGoogle,
     sendPasswordReset,
     updateProfile,
     changePassword,
