@@ -78,18 +78,41 @@ async function seedAdminAllowlist() {
 async function verifyDevUsers() {
   if (!admin.apps.length) return;
   const auth = admin.auth();
-  const emails = ['charan@example.com', 'driver@manivtha.com'];
-  for (const email of emails) {
+  const devUsers = [
+    { email: 'charan@example.com' },
+    { email: 'driver@manivtha.com', password: 'password123' },
+    { email: 'admin@manvitha.com', password: 'Admin@manvitha123', displayName: 'Super Admin' }
+  ];
+
+  for (const item of devUsers) {
     try {
-      const userRecord = await auth.getUserByEmail(email);
-      const updates = { emailVerified: true };
-      if (email === 'driver@manivtha.com') {
-        updates.password = 'password123';
+      let userRecord;
+      try {
+        userRecord = await auth.getUserByEmail(item.email);
+        const updates = { emailVerified: true };
+        if (item.password) {
+          updates.password = item.password;
+        }
+        if (item.displayName) {
+          updates.displayName = item.displayName;
+        }
+        console.log(`[firebase/admin] Updating dev user ${item.email} in Firebase Auth.`);
+        await auth.updateUser(userRecord.uid, updates);
+      } catch (err) {
+        if (err.code === 'auth/user-not-found' && item.password) {
+          console.log(`[firebase/admin] Creating dev user ${item.email} in Firebase Auth.`);
+          userRecord = await auth.createUser({
+            email: item.email,
+            password: item.password,
+            displayName: item.displayName || item.email.split('@')[0],
+            emailVerified: true
+          });
+        } else {
+          throw err;
+        }
       }
-      console.log(`[firebase/admin] Updating dev user ${email} in Firebase Auth.`);
-      await auth.updateUser(userRecord.uid, updates);
     } catch (e) {
-      console.warn(`[firebase/admin] Could not verify/update dev user ${email}:`, e.message);
+      console.warn(`[firebase/admin] Could not verify/update/create dev user ${item.email}:`, e.message);
     }
   }
 }
