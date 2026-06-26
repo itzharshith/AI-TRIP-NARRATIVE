@@ -38,6 +38,19 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '2mb' }));
 
+// Ensure DB is initialized before handling requests (crucial for Vercel Serverless)
+let dbInitialized = null;
+app.use((req, res, next) => {
+  if (!dbInitialized) {
+    dbInitialized = db.init().catch((err) => {
+      console.error('❌ Failed to lazy-initialize database:', err.message);
+      dbInitialized = null; // Reset to retry on next request
+      throw err;
+    });
+  }
+  dbInitialized.then(() => next()).catch(next);
+});
+
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, '../frontend')));
 
@@ -88,20 +101,25 @@ app.get('*', (req, res) => {
   }
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
-
 // ── Start Server (init Turso first, then listen) ──────────
-db.init().then(() => {
-  app.listen(PORT, () => {
-    console.log('\n╔══════════════════════════════════════════════╗');
-    console.log('║   Manivtha AI Trip Narrative Generator       ║');
-    console.log('║   Manivtha Tours & Travels — 2026            ║');
-    console.log('╠══════════════════════════════════════════════╣');
-    console.log(`║   🚀 Server : http://localhost:${PORT}          ║`);
-    console.log('║   🛢️   DB     : Turso (LibSQL)               ║');
-    console.log('╚══════════════════════════════════════════════╝\n');
+if (require.main === module) {
+  const initPromise = db.init();
+  dbInitialized = initPromise; // Pre-populate the middleware promise
+  initPromise.then(() => {
+    app.listen(PORT, () => {
+      console.log('\n╔══════════════════════════════════════════════╗');
+      console.log('║   Manivtha AI Trip Narrative Generator       ║');
+      console.log('║   Manivtha Tours & Travels — 2026            ║');
+      console.log('╠══════════════════════════════════════════════╣');
+      console.log(`║   🚀 Server : http://localhost:${PORT}          ║`);
+      console.log('║   🛢️   DB     : Turso (LibSQL)               ║');
+      console.log('╚══════════════════════════════════════════════╝\n');
+    });
+  }).catch((err) => {
+    console.error('❌ Failed to initialize Turso:', err.message);
+    console.error('   → Check your TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in backend/.env');
+    process.exit(1);
   });
-}).catch((err) => {
-  console.error('❌ Failed to initialize Turso:', err.message);
-  console.error('   → Check your TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in backend/.env');
-  process.exit(1);
-});
+}
+
+module.exports = app;

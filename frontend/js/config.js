@@ -18,8 +18,10 @@ const FIREBASE_CONFIG = {
   measurementId:     "G-Z1CDCVMX8K",
 };
 
-// Backend API base URL
-const API_BASE = 'http://localhost:3001/api';
+// Backend API base URL (dynamically resolves to relative path in production)
+const API_BASE = (window.location.port === '5500' || window.location.protocol === 'file:')
+  ? 'http://localhost:3001/api'
+  : window.location.origin + '/api';
 
 // ── Initialize Firebase (prevent duplicate-app errors) ────────
 let firebaseApp     = null;
