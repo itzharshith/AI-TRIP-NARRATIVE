@@ -56,19 +56,22 @@ async function verifyToken(req, res, next) {
   }
 
   try {
-    // 2. Resolve role from Firestore Allowlist and/or env configuration
+    // 2. Resolve role: trust database role, fall back to SUPER_ADMIN_EMAIL check for bootstrapping
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'admin@manivtha.com').toLowerCase();
+    const isSuperAdmin = user.email && user.email.toLowerCase() === superAdminEmail;
+
+    let dbUser = await db.getUserByUid(user.uid);
+
     let role = 'User';
-    if (user.email) {
-      const isAllowedAdmin = await firebaseAdmin.isAllowedAdmin(user.email);
-      if (isAllowedAdmin) {
-        role = 'Admin';
-      }
+    if (isSuperAdmin) {
+      role = 'Admin';
+    } else if (dbUser) {
+      role = dbUser.role || 'User';
     }
 
     const permissions = role === 'Admin' ? ['all'] : [];
 
-    // 3. Load or register user record in MongoDB
-    let dbUser = await db.getUserByUid(user.uid);
+    // 3. Load or register user record in database
     if (!dbUser) {
       console.log(`[verifyToken] Registering new user: ${user.email} (role: ${role})`);
       await db.upsertUser({
@@ -83,7 +86,7 @@ async function verifyToken(req, res, next) {
       });
       dbUser = await db.getUserByUid(user.uid);
     } else {
-      // Sync verification, role, or permissions state if changed
+      // Sync verification, role (for super admin upgrade), or permissions state if changed
       const roleChanged = dbUser.role !== role;
       const verifiedChanged = dbUser.emailVerified !== user.email_verified;
       if (roleChanged || verifiedChanged) {

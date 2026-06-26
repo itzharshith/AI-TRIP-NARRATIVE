@@ -56,27 +56,22 @@ async function seedAdminAllowlist() {
   if (!admin.apps.length) return;
   const db = admin.firestore();
   
-  const admins = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean);
-    
-  for (const email of admins) {
-    try {
-      const docRef = db.collection('admins').doc(email);
-      const doc = await docRef.get();
-      if (!doc.exists) {
-        console.log(`[firebase/admin] Seeding admin allowlist for ${email}`);
-        await docRef.set({
-          email: email,
-          role: 'admin',
-          enabled: true,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    } catch (e) {
-      console.warn(`[firebase/admin] Failed to seed admin email ${email}:`, e.message);
+  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'admin@manivtha.com').toLowerCase();
+  
+  try {
+    const docRef = db.collection('admins').doc(superAdminEmail);
+    const doc = await docRef.get();
+    if (!doc.exists) {
+      console.log(`[firebase/admin] Seeding admin allowlist for ${superAdminEmail}`);
+      await docRef.set({
+        email: superAdminEmail,
+        role: 'admin',
+        enabled: true,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
     }
+  } catch (e) {
+    console.warn(`[firebase/admin] Failed to seed super admin email ${superAdminEmail}:`, e.message);
   }
 }
 
@@ -137,21 +132,18 @@ module.exports = {
 
   // ── Admin Email Check ────────────────────────────────────────
   /**
-   * Check if email is in the ADMIN_EMAILS allow-list.
+   * Check if email is the Super Admin.
    * @param {string} email
    * Returns: boolean
    */
   isAdminEmail(email) {
-    const admins = (process.env.ADMIN_EMAILS || '')
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-    return admins.includes((email || '').toLowerCase());
+    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'admin@manivtha.com').toLowerCase();
+    return (email || '').toLowerCase() === superAdminEmail;
   },
 
   /**
    * Check dynamically if email is an allowed admin via Firestore allowlist collection,
-   * falling back to the static ADMIN_EMAILS environment check.
+   * falling back to the static SUPER_ADMIN_EMAIL check.
    * @param {string} email
    * Returns: Promise<boolean>
    */

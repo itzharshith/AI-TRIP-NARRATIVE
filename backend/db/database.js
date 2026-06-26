@@ -385,13 +385,9 @@ async function getAllForExport() {
 async function upsertUser({ uid, email, displayName, photoURL, provider, emailVerified, role: inputRole, permissions: inputPermissions }) {
   const now = new Date().toISOString();
   
-  // Resolve default role based on ADMIN_EMAILS allow-list
-  const admins = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  
-  const isDefaultAdmin = admins.includes((email || '').toLowerCase());
+  // Resolve default role based on SUPER_ADMIN_EMAIL
+  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'admin@manivtha.com').toLowerCase();
+  const isDefaultAdmin = email && email.toLowerCase() === superAdminEmail;
   
   let role = 'User';
   if (inputRole) {
@@ -419,6 +415,34 @@ async function upsertUser({ uid, email, displayName, photoURL, provider, emailVe
   `, [
     uid, email, displayName || '', photoURL || '', provider || 'email', emailVerified ? 1 : 0, role, permissions, now, now, now
   ]);
+
+  // Sync to Firestore if Firebase Admin is initialized
+  try {
+    const firebaseAdmin = require('../firebase/admin');
+    if (firebaseAdmin.isReady && firebaseAdmin.adminDb) {
+      const db = firebaseAdmin.adminDb;
+      await db.collection('users').doc(uid).set({
+        uid,
+        email,
+        displayName: displayName || '',
+        photoURL: photoURL || '',
+        role: role,
+        updatedAt: new Date()
+      }, { merge: true });
+
+      // Also ensure the super admin is always in the admins collection
+      if (isDefaultAdmin) {
+        await db.collection('admins').doc(superAdminEmail).set({
+          email: superAdminEmail,
+          role: 'admin',
+          enabled: true,
+          updatedAt: new Date()
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[database] Failed to sync profile to Firestore in upsertUser:', err.message);
+  }
 }
 
 /**
@@ -457,6 +481,36 @@ async function updateUserRoleAndPermissions(uid, role, permissions) {
   const perms = JSON.stringify(permissions || (targetRole === 'Admin' ? ['all'] : []));
   const now = new Date().toISOString();
   await turso.execute('UPDATE users SET role = ?, permissions = ?, updatedAt = ? WHERE uid = ?', [targetRole, perms, now, uid]);
+
+  // Sync to Firestore if Firebase Admin is initialized
+  try {
+    const firebaseAdmin = require('../firebase/admin');
+    if (firebaseAdmin.isReady && firebaseAdmin.adminDb) {
+      const db = firebaseAdmin.adminDb;
+      // 1. Update users collection role
+      await db.collection('users').doc(uid).set({ role: targetRole }, { merge: true });
+      
+      // 2. Update/create admins allowlist document depending on the role
+      const userRes = await turso.execute('SELECT email FROM users WHERE uid = ? LIMIT 1', [uid]);
+      const email = userRes.rows[0]?.email;
+      if (email) {
+        const emailLower = email.toLowerCase();
+        if (targetRole === 'Admin') {
+          await db.collection('admins').doc(emailLower).set({
+            email: emailLower,
+            role: 'admin',
+            enabled: true,
+            updatedAt: new Date()
+          });
+        } else {
+          // If demoted, delete from allowlist or disable it
+          await db.collection('admins').doc(emailLower).delete();
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[database] Failed to sync role to Firestore:', err.message);
+  }
 }
 
 /**
