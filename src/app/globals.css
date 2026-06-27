@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #003c90;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #0f52ba;
+  --color-on-primary-container: #bcceff;
+  --color-primary-fixed: #d9e2ff;
+  --color-primary-fixed-dim: #b0c6ff;
+  --color-on-primary-fixed: #001945;
+  --color-on-primary-fixed-variant: #00419c;
+  --color-inverse-primary: #b0c6ff;
+  --color-secondary: #ac3509;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fe6f42;
+  --color-on-secondary-container: #631800;
+  --color-secondary-fixed: #ffdbd0;
+  --color-secondary-fixed-dim: #ffb59f;
+  --color-on-secondary-fixed: #3a0a00;
+  --color-on-secondary-fixed-variant: #852300;
+  --color-tertiary: #004940;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #006358;
+  --color-on-tertiary-container: #62e2ce;
+  --color-tertiary-fixed: #79f7e3;
+  --color-tertiary-fixed-dim: #59dbc7;
+  --color-on-tertiary-fixed: #00201c;
+  --color-on-tertiary-fixed-variant: #005047;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-background: #f7f9fb;
+  --color-on-background: #191c1e;
+  --color-surface: #f7f9fb;
+  --color-surface-dim: #d8dadc;
+  --color-surface-bright: #f7f9fb;
+  --color-surface-variant: #e0e3e5;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #434653;
+  --color-surface-tint: #1d59c1;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container: #eceef0;
+  --color-surface-container-high: #e6e8ea;
+  --color-surface-container-highest: #e0e3e5;
+  --color-inverse-surface: #2d3133;
+  --color-inverse-on-surface: #eff1f3;
+  --color-outline: #737784;
+  --color-outline-variant: #c3c6d5;
+
+  --radius-DEFAULT: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --spacing-gutter: 24px;
+  --spacing-container-max: 1280px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 40px;
+  --spacing-base: 8px;
+
+  --font-sans: "Work Sans", system-ui, sans-serif;
+  --font-display-lg: "Plus Jakarta Sans", sans-serif;
+  --font-headline-lg: "Plus Jakarta Sans", sans-serif;
+  --font-headline-md: "Plus Jakarta Sans", sans-serif;
+  --font-body-lg: "Work Sans", sans-serif;
+  --font-body-md: "Work Sans", sans-serif;
+  --font-label-md: "Work Sans", sans-serif;
+
+  --shadow-ambient: 0 4px 20px rgba(15, 82, 186, 0.08);
+  --shadow-ambient-lg: 0 8px 40px rgba(15, 82, 186, 0.12);
+  --shadow-primary: 0 4px 20px rgba(0, 60, 144, 0.25);
+}
+
+:root {
+  --background: #f7f9fb;
+  --foreground: #191c1e;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: "Work Sans", system-ui, sans-serif;
+}
+
+/* ── Material Icons config ── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+.ms-filled { 
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
+}
+
+/* Glass Components */
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.glass-nav {
+  background: rgba(247, 249, 251, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.glass-panel {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, #003c90 0%, #0f52ba 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero overlay */
+.hero-gradient { 
+  background: linear-gradient(to bottom, rgba(25,28,30,0.35), rgba(25,28,30,0.08)); 
+}
+
+/* Step transition */
+.step-pane { 
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+
+/* Parallax background (retains styling exactly) */
+.parallax {
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Wave SVG layout positioning */
+.wave-container {
+  position: relative;
+  width: 100%;
+  height: 80px;
+  overflow: hidden;
+  line-height: 0;
+}
+.wave-container svg {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 80px;
+}

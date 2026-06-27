@@ -28,3 +28,6 @@ Thumbs.db
 # --- Build outputs ---
 dist/
 build/
+
+# --- Portable Node Path ---
+n/
