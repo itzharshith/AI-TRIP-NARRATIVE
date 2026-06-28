@@ -81,6 +81,7 @@ export default function ExplorePage() {
   const [lastNarrativeData, setLastNarrativeData] = useState<any>(null);
   const [photosList, setPhotosList] = useState<any[]>([]);
   const [uploadedPhotos, setUploadedPhotos] = useState<Array<{ file: File; url: string; name: string }>>([]);
+  const [photoPermission, setPhotoPermission] = useState(false);
 
   // AI Image Generation state (Step 3)
   const [aiImgLoading, setAiImgLoading] = useState(false);
@@ -348,6 +349,10 @@ export default function ExplorePage() {
 
   // Generate narrative API triggers
   const handleGenerate = async () => {
+    if (uploadedPhotos.length > 0 && !photoPermission) {
+      showToast('Please confirm customer permission has been taken to use the photos.', 'error');
+      return;
+    }
     setGenerating(true);
     try {
       const res = await fetch('/api/generate', {
@@ -535,6 +540,7 @@ export default function ExplorePage() {
     setLandmarks('');
     setHighlights('');
     setUploadedPhotos([]);
+    setPhotoPermission(false);
     setLastNarrativeData(null);
     setPhotosList([]);
   };
@@ -1598,13 +1604,28 @@ export default function ExplorePage() {
                       </div>
 
                       {uploadedPhotos.length > 0 && (
-                        <div className="grid grid-cols-5 md:grid-cols-10 gap-3 mt-4">
-                          {uploadedPhotos.map((p, idx) => (
-                            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-md">
-                              <img src={p.url} alt="upload" className="w-full h-full object-cover" />
-                              <button onClick={(e) => { e.stopPropagation(); removePhoto(idx); }} className="absolute top-1 right-1 w-5 h-5 bg-black/70 text-white rounded-full flex items-center justify-center text-[10px] hover:bg-black">×</button>
-                            </div>
-                          ))}
+                        <div className="space-y-4 mt-4">
+                          <div className="grid grid-cols-5 md:grid-cols-10 gap-3">
+                            {uploadedPhotos.map((p, idx) => (
+                              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-md">
+                                <img src={p.url} alt="upload" className="w-full h-full object-cover" />
+                                <button onClick={(e) => { e.stopPropagation(); removePhoto(idx); }} className="absolute top-1 right-1 w-5 h-5 bg-black/70 text-white rounded-full flex items-center justify-center text-[10px] hover:bg-black">×</button>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="flex items-center gap-3 p-4 bg-surface-container-low rounded-xl border border-outline-variant/60">
+                            <input
+                              type="checkbox"
+                              id="photoPermissionCheck"
+                              checked={photoPermission}
+                              onChange={(e) => setPhotoPermission(e.target.checked)}
+                              className="w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary cursor-pointer"
+                            />
+                            <label htmlFor="photoPermissionCheck" className="text-xs font-semibold text-on-surface-variant cursor-pointer select-none">
+                              I confirm that customer permission has been taken to use the attached photos. *
+                            </label>
+                          </div>
                         </div>
                       )}
                     </div>
