@@ -1062,19 +1062,19 @@ export default function ExplorePage() {
       <header className="glass-nav shadow-sm sticky top-0 z-50 border-b border-outline-variant/50">
         <nav className="flex justify-between items-center w-full px-4 lg:px-margin-desktop py-4 max-w-container-max mx-auto gap-4">
           <div className="flex-shrink-0 flex items-center">
-            <Link href="#explore" className="font-headline-md text-headline-md font-bold text-primary whitespace-nowrap hover:opacity-90 transition-opacity">
+            <Link href="#explore" onClick={() => setActiveView('explore')} className="font-headline-md text-headline-md font-bold text-primary whitespace-nowrap hover:opacity-90 transition-opacity">
               Manivtha Tours
             </Link>
           </div>
 
           {/* Desktop Links */}
           <div className="hidden lg:flex flex-1 justify-evenly items-center gap-4 xl:gap-6 font-body-md">
-            <Link href="#explore" className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'explore' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>Explore</Link>
-            <Link href="#history" className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'history' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>My Narratives</Link>
-            <Link href="#generate" className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'generate' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>Create New</Link>
-            <Link href="#analytics" className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'analytics' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>Analytics</Link>
-            <Link href="#about" className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'about' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>About</Link>
-            <Link href="#contact" className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'contact' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>Contact</Link>
+            <Link href="#explore" onClick={() => setActiveView('explore')} className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'explore' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>Explore</Link>
+            <Link href="#history" onClick={() => setActiveView('history')} className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'history' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>My Narratives</Link>
+            <Link href="#generate" onClick={() => setActiveView('generate')} className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'generate' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>Create New</Link>
+            <Link href="#analytics" onClick={() => setActiveView('analytics')} className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'analytics' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>Analytics</Link>
+            <Link href="#about" onClick={() => setActiveView('about')} className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'about' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>About</Link>
+            <Link href="#contact" onClick={() => setActiveView('contact')} className={`nav-link pb-0.5 whitespace-nowrap ${activeView === 'contact' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary transition-colors'}`}>Contact</Link>
           </div>
 
           {/* Actions */}
@@ -1097,7 +1097,7 @@ export default function ExplorePage() {
             </button>
 
             {/* Create CTA */}
-            <Link href="#generate" className="hidden sm:flex items-center gap-2 bg-primary-container text-white px-4 md:px-5 py-2 rounded-full font-label-md text-label-md hover:shadow-primary transition-all active:scale-95">
+            <Link href="#generate" onClick={() => setActiveView('generate')} className="hidden sm:flex items-center gap-2 bg-primary-container text-white px-4 md:px-5 py-2 rounded-full font-label-md text-label-md hover:shadow-primary transition-all active:scale-95">
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
               <span className="hidden md:inline">Create</span>
             </Link>
@@ -1159,12 +1159,12 @@ export default function ExplorePage() {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-outline-variant bg-surface">
             <div className="flex flex-col px-4 py-3 gap-1">
-              <Link href="#explore" className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Explore</Link>
-              <Link href="#history" className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">My Narratives</Link>
-              <Link href="#generate" className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Create New</Link>
-              <Link href="#analytics" className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Analytics</Link>
-              <Link href="#about" className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">About</Link>
-              <Link href="#contact" className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Contact</Link>
+              <Link href="#explore" onClick={() => { setActiveView('explore'); setMobileMenuOpen(false); }} className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Explore</Link>
+              <Link href="#history" onClick={() => { setActiveView('history'); setMobileMenuOpen(false); }} className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">My Narratives</Link>
+              <Link href="#generate" onClick={() => { setActiveView('generate'); setMobileMenuOpen(false); }} className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Create New</Link>
+              <Link href="#analytics" onClick={() => { setActiveView('analytics'); setMobileMenuOpen(false); }} className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Analytics</Link>
+              <Link href="#about" onClick={() => { setActiveView('about'); setMobileMenuOpen(false); }} className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">About</Link>
+              <Link href="#contact" onClick={() => { setActiveView('contact'); setMobileMenuOpen(false); }} className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Contact</Link>
               {user?.role === 'Admin' && (
                 <Link href="/admin" className="nav-link py-3 px-4 rounded-xl text-on-surface-variant hover:bg-primary-fixed hover:text-on-primary-fixed transition-colors font-body-md">Admin Panel</Link>
               )}
@@ -1197,10 +1197,10 @@ export default function ExplorePage() {
                   Turn your raw travel photos and scattered notes into immersive, AI-crafted narratives. Share the soul of your adventure, not just the itinerary.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="#generate" className="bg-secondary-container text-white px-8 py-4 rounded-xl font-headline-md shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 text-center">
+                  <Link href="#generate" onClick={() => setActiveView('generate')} className="bg-secondary-container text-white px-8 py-4 rounded-xl font-headline-md shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 text-center">
                     Start Your Story
                   </Link>
-                  <Link href="#history" className="glass-card text-on-surface px-8 py-4 rounded-xl font-headline-md border border-white/30 hover:bg-white/90 transition-all flex items-center justify-center gap-2">
+                  <Link href="#history" onClick={() => setActiveView('history')} className="glass-card text-on-surface px-8 py-4 rounded-xl font-headline-md border border-white/30 hover:bg-white/90 transition-all flex items-center justify-center gap-2">
                     <span className="material-symbols-outlined">play_circle</span>
                     My Narratives
                   </Link>
@@ -1263,7 +1263,7 @@ export default function ExplorePage() {
                   <h2 className="font-headline-lg text-headline-lg text-primary mb-2">Recent Community Stories</h2>
                   <p className="text-on-surface-variant font-body-md">Latest road trips and journeys shared by our users.</p>
                 </div>
-                <Link href="#history" className="text-primary font-label-md flex items-center gap-2 hover:gap-4 transition-all">
+                <Link href="#history" onClick={() => setActiveView('history')} className="text-primary font-label-md flex items-center gap-2 hover:gap-4 transition-all">
                   View My History <span className="material-symbols-outlined">arrow_forward</span>
                 </Link>
               </div>
@@ -1382,7 +1382,7 @@ export default function ExplorePage() {
                 Join Manivtha's AI-powered narrative platform. Transform any trip into a compelling story in seconds.
               </p>
               <div className="flex justify-center">
-                <Link href="#generate" className="bg-secondary-container text-white px-10 py-5 rounded-2xl font-headline-md shadow-2xl hover:bg-secondary transition-all active:scale-95">
+                <Link href="#generate" onClick={() => setActiveView('generate')} className="bg-secondary-container text-white px-10 py-5 rounded-2xl font-headline-md shadow-2xl hover:bg-secondary transition-all active:scale-95">
                   Generate Your First Story
                 </Link>
               </div>
@@ -1645,7 +1645,7 @@ export default function ExplorePage() {
                         <div className="p-6 bg-primary-container text-white rounded-xl space-y-4">
                           <p className="font-bold text-lg">Saved to History</p>
                           <p className="text-sm opacity-95">This narrative has been securely synchronized with your account.</p>
-                          <Link href="#history" className="block text-center w-full bg-secondary-container text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all">
+                          <Link href="#history" onClick={() => setActiveView('history')} className="block text-center w-full bg-secondary-container text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all">
                             View My History
                           </Link>
                         </div>
@@ -1683,7 +1683,7 @@ export default function ExplorePage() {
                 <h1 className="font-headline-lg text-headline-lg text-on-surface">Your AI Narratives</h1>
                 <p className="font-body-lg text-body-lg text-on-surface-variant">Relive your adventures through beautifully curated AI stories.</p>
               </div>
-              <Link href="#generate" className="bg-secondary-container text-white px-8 py-4 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-ambient hover:shadow-lg transition-all active:scale-95">
+              <Link href="#generate" onClick={() => setActiveView('generate')} className="bg-secondary-container text-white px-8 py-4 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-ambient hover:shadow-lg transition-all active:scale-95">
                 Create New Narrative
               </Link>
             </header>
