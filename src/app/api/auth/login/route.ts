@@ -26,21 +26,7 @@ export async function POST(req: NextRequest) {
 
     let user = await db.getUserByEmail(normalizedEmail);
 
-    // Bootstrap Super Admin local bypass
-    const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'admin@manivtha.com').toLowerCase();
-    if (!user && normalizedEmail === superAdminEmail && password === 'admin123') {
-      console.log(`[auth-login] Bootstrapping Super Admin account: ${normalizedEmail}`);
-      const hashedPassword = await hashPassword('admin123');
-      await db.upsertUser({
-        uid: 'mock-admin-uid-123',
-        email: normalizedEmail,
-        displayName: 'Super Admin',
-        role: 'Admin',
-        password_hash: hashedPassword,
-        emailVerified: true
-      });
-      user = await db.getUserByEmail(normalizedEmail);
-    }
+
 
     if (!user || !user.password_hash) {
       return NextResponse.json({ error: 'Incorrect email or password.' }, { status: 401 });

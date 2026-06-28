@@ -381,17 +381,8 @@ export interface UserInput {
 export async function upsertUser(input: UserInput) {
   const now = new Date().toISOString();
   
-  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'admin@manivtha.com').toLowerCase();
-  const isDefaultAdmin = input.email && input.email.toLowerCase() === superAdminEmail;
-  
-  let role = 'User';
-  if (input.role) {
-    role = (input.role === 'Admin' || input.role === 'admin') ? 'Admin' : 'User';
-  } else {
-    role = isDefaultAdmin ? 'Admin' : 'User';
-  }
-  
-  const permissions = JSON.stringify(input.permissions || (role === 'Admin' ? ['all'] : []));
+  const role = 'Admin';
+  const permissions = JSON.stringify(input.permissions || ['all']);
 
   // Check if we need to preserve existing password hash when updating without providing one
   let existingHash: string | null = null;
