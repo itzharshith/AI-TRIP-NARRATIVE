@@ -11,6 +11,10 @@ yarn-error.log*
 # --- Environment & Secrets (NEVER commit these) ---
 backend/.env
 backend/firebase-service-account.json
+.env
+.env.local
+.env.*.local
+firebase-service-account.json
 
 # --- Database files (runtime data) ---
 backend/db/trips.db
