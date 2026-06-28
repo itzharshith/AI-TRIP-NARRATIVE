@@ -33,20 +33,20 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     const { id } = await params;
-    const legacyId = Number(id);
+    const narrativeId = Number(id);
     
     await db.init();
-    const row = await db.getGeneration(legacyId);
+    const row = await db.getGeneration(narrativeId);
     if (!row) {
       return NextResponse.json({ error: 'Record not found.' }, { status: 404 });
     }
 
-    await db.deleteGeneration(legacyId);
+    await db.deleteGeneration(narrativeId);
     
     // Log admin activity
-    await db.logActivity(user.uid, 'Delete Narrative', `Soft deleted narrative ID: ${legacyId}`);
+    await db.logActivity(user.uid, 'Delete Narrative', `Soft deleted narrative ID: ${narrativeId}`);
 
-    return NextResponse.json({ success: true, deleted: legacyId });
+    return NextResponse.json({ success: true, deleted: narrativeId });
 
   } catch (err: any) {
     console.error('[admin-data-id] DELETE error:', err);

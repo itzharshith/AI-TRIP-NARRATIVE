@@ -4,10 +4,10 @@ import * as db from '@/lib/database';
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const legacyId = Number(id);
+    const narrativeId = Number(id);
 
     await db.init();
-    await db.incrementViews(legacyId);
+    await db.incrementViews(narrativeId);
 
     return NextResponse.json({ success: true });
 

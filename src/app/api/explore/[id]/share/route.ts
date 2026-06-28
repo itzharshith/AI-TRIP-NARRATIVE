@@ -10,10 +10,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const { id } = await params;
-    const legacyId = Number(id);
+    const narrativeId = Number(id);
 
     await db.init();
-    await db.incrementShares(legacyId);
+    await db.incrementShares(narrativeId);
 
     return NextResponse.json({ success: true });
 
