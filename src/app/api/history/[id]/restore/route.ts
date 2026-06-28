@@ -10,10 +10,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const { id } = await params;
-    const legacyId = Number(id);
+    const narrativeId = Number(id);
 
     await db.init();
-    const row = await db.getGeneration(legacyId);
+    const row = await db.getGeneration(narrativeId);
     if (!row) {
       return NextResponse.json({ error: 'Narrative not found or not recoverable.' }, { status: 404 });
     }
@@ -22,15 +22,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'Forbidden. You do not own this narrative.' }, { status: 403 });
     }
 
-    await db.restoreGeneration(legacyId);
+    await db.restoreGeneration(narrativeId);
 
     // Log user activity
-    await db.logActivity(user.uid, 'Restore Narrative', `Restored soft-deleted narrative ID: ${legacyId}`);
+    await db.logActivity(user.uid, 'Restore Narrative', `Restored soft-deleted narrative ID: ${narrativeId}`);
 
-    return NextResponse.json({ success: true, id: legacyId, restored: true });
+    return NextResponse.json({ success: true, id: narrativeId, restored: true });
 
   } catch (err: any) {
     console.error('[history-restore] POST error:', err);
     return NextResponse.json({ error: 'Failed to restore narrative.', detail: err.message }, { status: 500 });
   }
 }
+

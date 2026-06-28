@@ -10,7 +10,7 @@ const FeedbackSchema = z.object({
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const legacyId = Number(id);
+    const narrativeId = Number(id);
     const body = await req.json();
 
     const result = FeedbackSchema.safeParse(body);
@@ -21,17 +21,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { rating, comment } = result.data;
 
     await db.init();
-    const row = await db.getGeneration(legacyId);
+    const row = await db.getGeneration(narrativeId);
     if (!row) {
       return NextResponse.json({ error: 'Generation not found.' }, { status: 404 });
     }
 
-    await db.updateRating(legacyId, Math.round(rating), comment || null);
+    await db.updateRating(narrativeId, Math.round(rating), comment || null);
 
-    return NextResponse.json({ success: true, id: legacyId, rating: Math.round(rating) });
+    return NextResponse.json({ success: true, id: narrativeId, rating: Math.round(rating) });
 
   } catch (err: any) {
     console.error('[feedback-id] POST error:', err);
     return NextResponse.json({ error: 'Failed to save rating.', detail: err.message }, { status: 500 });
   }
 }
+

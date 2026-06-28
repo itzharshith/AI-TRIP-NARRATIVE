@@ -5,10 +5,10 @@ import { getAuthenticatedUser } from '@/lib/auth/helper';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const legacyId = Number(id);
+    const narrativeId = Number(id);
 
     await db.init();
-    const row = await db.getGeneration(legacyId);
+    const row = await db.getGeneration(narrativeId);
     if (!row) {
       return NextResponse.json({ error: 'Generation not found.' }, { status: 404 });
     }
@@ -29,10 +29,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     const { id } = await params;
-    const legacyId = Number(id);
+    const narrativeId = Number(id);
 
     await db.init();
-    const row = await db.getGeneration(legacyId);
+    const row = await db.getGeneration(narrativeId);
     if (!row) {
       return NextResponse.json({ error: 'Narrative not found.' }, { status: 404 });
     }
@@ -42,18 +42,19 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Forbidden. You do not own this narrative.' }, { status: 403 });
     }
 
-    await db.deleteGeneration(legacyId);
+    await db.deleteGeneration(narrativeId);
 
     // Log user activity
-    await db.logActivity(user.uid, 'Archive Narrative', `Soft deleted narrative ID: ${legacyId}`);
+    await db.logActivity(user.uid, 'Archive Narrative', `Soft deleted narrative ID: ${narrativeId}`);
 
-    return NextResponse.json({ success: true, id: legacyId, archived: true });
+    return NextResponse.json({ success: true, id: narrativeId, archived: true });
 
   } catch (err: any) {
     console.error('[history-id] DELETE error:', err);
     return NextResponse.json({ error: 'Failed to archive narrative.', detail: err.message }, { status: 500 });
   }
 }
+
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -62,13 +63,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const { id } = await params;
-    const legacyId = Number(id);
+    const narrativeId = Number(id);
 
     const body = await req.json();
     const { title, narrative, summary, visibility } = body;
 
     await db.init();
-    const row = await db.getGeneration(legacyId);
+    const row = await db.getGeneration(narrativeId);
     if (!row) {
       return NextResponse.json({ error: 'Narrative not found.' }, { status: 404 });
     }
@@ -77,7 +78,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Forbidden. You do not own this narrative.' }, { status: 403 });
     }
 
-    await db.updateNarrative(legacyId, { title, narrative, summary, visibility });
+    await db.updateNarrative(narrativeId, { title, narrative, summary, visibility });
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
@@ -85,3 +86,4 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Failed to update narrative.', detail: err.message }, { status: 500 });
   }
 }
+

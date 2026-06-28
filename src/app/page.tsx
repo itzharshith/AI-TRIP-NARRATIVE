@@ -258,9 +258,8 @@ export default function ExplorePage() {
       window.location.hash = '#login';
       return;
     }
-    const cleanId = String(narrativeId).replace('sqlite-', '');
     try {
-      const res = await fetch(`/api/wishlist/${cleanId}`, { method: 'POST' });
+      const res = await fetch(`/api/wishlist/${narrativeId}`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         showToast(data.added ? 'Saved to Wishlist!' : 'Removed from Wishlist.', 'success');
@@ -526,9 +525,8 @@ export default function ExplorePage() {
 
   // Open Detail Modal
   const openDetailModal = async (id: number | string) => {
-    const cleanId = String(id).replace('sqlite-', '');
     try {
-      const res = await fetch(`/api/history/${cleanId}`);
+      const res = await fetch(`/api/history/${id}`);
       if (res.ok) {
         const data = await res.json();
         setSelectedNarrative(data);
@@ -567,9 +565,8 @@ export default function ExplorePage() {
 
   // Serving Photos list
   const loadNarrativePhotos = async (nId: number | string) => {
-    const cleanId = String(nId).replace('sqlite-', '');
     try {
-      const res = await fetch(`/api/photos/${cleanId}`);
+      const res = await fetch(`/api/photos/${nId}`);
       if (res.ok) {
         const data = await res.json();
         setPhotosList(data.photos || []);
