@@ -1288,8 +1288,12 @@ export default function ExplorePage() {
                     }
 
                     return (
-                      <div key={rec.id} className="group bg-white rounded-3xl overflow-hidden border border-outline-variant hover:shadow-ambient-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-[480px]">
-                        <div className="relative h-48 overflow-hidden cursor-pointer" onClick={() => openDetailModal(rec.id)}>
+                      <div
+                        key={rec.id}
+                        onClick={() => openDetailModal(rec.id)}
+                        className="group bg-white rounded-3xl overflow-hidden border border-outline-variant hover:shadow-ambient-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-[480px] cursor-pointer"
+                      >
+                        <div className="relative h-48 overflow-hidden">
                           <img src={img} alt={rec.route} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                           <div className={`absolute top-4 left-4 glass-card px-3 py-1 rounded-full text-xs font-bold ${meta.color}`}>
                             {meta.icon} {tone}
@@ -1312,7 +1316,7 @@ export default function ExplorePage() {
                               </span>
                               <span>📍 {rec.destination || 'Hyderabad'}</span>
                             </div>
-                            <h3 className="font-headline-md text-headline-md text-on-surface mb-2 cursor-pointer hover:text-primary transition-colors line-clamp-1" onClick={() => openDetailModal(rec.id)}>
+                            <h3 className="font-headline-md text-headline-md text-on-surface mb-2 hover:text-primary transition-colors line-clamp-1">
                               {rec.title || rec.route}
                             </h3>
                             <p className="text-on-surface-variant font-body-md text-sm line-clamp-3 mb-4">{excerpt}</p>
@@ -1735,8 +1739,12 @@ export default function ExplorePage() {
               {historyRecords.map((rec, i) => {
                 const img = rec.image_url || CARD_IMAGES[i % CARD_IMAGES.length];
                 return (
-                  <div key={rec.id} className="bg-white rounded-3xl overflow-hidden border border-outline-variant shadow-ambient hover:shadow-ambient-lg transition-all duration-300 flex flex-col h-[400px]">
-                    <div className="relative h-44 cursor-pointer" onClick={() => openDetailModal(rec.id)}>
+                  <div
+                    key={rec.id}
+                    onClick={() => openDetailModal(rec.id)}
+                    className="bg-white rounded-3xl overflow-hidden border border-outline-variant shadow-ambient hover:shadow-ambient-lg transition-all duration-300 flex flex-col h-[400px] cursor-pointer"
+                  >
+                    <div className="relative h-44">
                       <img src={img} alt="trip" className="w-full h-full object-cover" />
                       <div className="absolute top-4 left-4 bg-primary-container text-white text-xs px-3 py-1 rounded-full font-bold">
                         {rec.tone}
@@ -1745,7 +1753,7 @@ export default function ExplorePage() {
                     <div className="p-6 flex-1 flex flex-col justify-between">
                       <div>
                         <p className="text-xs text-outline">📍 {rec.destination || 'Hyderabad'}</p>
-                        <h3 className="font-bold text-lg text-on-surface mt-1 cursor-pointer line-clamp-1" onClick={() => openDetailModal(rec.id)}>{rec.title || rec.route}</h3>
+                        <h3 className="font-bold text-lg text-on-surface mt-1 line-clamp-1 hover:text-primary transition-colors">{rec.title || rec.route}</h3>
                         <p className="text-sm text-on-surface-variant line-clamp-3 mt-2">{rec.summary}</p>
                       </div>
                       <div className="border-t pt-4 flex items-center justify-between text-xs text-outline">
