@@ -7,7 +7,7 @@ import { getAuthenticatedUser } from '@/lib/auth/helper';
 import { buildTravelPrompt } from '@/lib/utils/promptBuilder';
 
 const MIN_WORDS = 200;
-const MIN_CHARS = 3000;
+const MIN_CHARS = 1000;
 const MAX_RETRIES = 3;
 
 function getGenAI() {
@@ -72,7 +72,9 @@ export async function POST(req: NextRequest) {
       mood, style, tone, landmarks, highlights, tripDate, vehicleType
     } = body;
 
-    const finalRoute = (startingLocation && destination) ? `${startingLocation} to ${destination}` : route;
+    const finalRoute = (startingLocation && destination)
+      ? `${startingLocation} to ${destination}`
+      : (startingLocation || destination || route);
 
     if (!driverName || !finalRoute) {
       return NextResponse.json({ error: 'driverName and route (or startingLocation/destination) are required fields.' }, { status: 400 });

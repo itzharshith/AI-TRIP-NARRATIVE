@@ -78,8 +78,8 @@ STRICT OUTPUT REQUIREMENTS — YOU MUST FOLLOW THESE EXACTLY:
    }
 
 2. LENGTH OF NARRATIVE: The "narrative" string MUST meet ALL of the following:
-   - ABSOLUTE MINIMUM: 200 words and 3,000 characters (HARD REQUIREMENT — failure causes a retry)
-   - STRONG TARGET: 600 words and 3,500 characters for a rich, premium story
+   - ABSOLUTE MINIMUM: 200 words and 1,000 characters (HARD REQUIREMENT — failure causes a retry)
+   - STRONG TARGET: 400 words and 2,000 characters for a rich, premium story
    - Write FIVE to SEVEN rich, flowing paragraphs.
    - Each paragraph must be at least 50 words.
    - Do not truncate — write the COMPLETE story from departure to arrival.

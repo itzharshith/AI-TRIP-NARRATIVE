@@ -1610,11 +1610,30 @@ export default function ExplorePage() {
                     </div>
 
                     <div className="pt-4 flex justify-between">
-                      <button type="button" onClick={() => goToStep(1)} className="text-on-surface-variant px-6 py-4 rounded-full font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container transition-all">
+                      <button
+                        type="button"
+                        onClick={() => goToStep(1)}
+                        disabled={generating}
+                        className="text-on-surface-variant px-6 py-4 rounded-full font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
                         <span className="material-symbols-outlined">arrow_back</span> Back
                       </button>
-                      <button type="button" onClick={handleGenerate} className="bg-secondary-container text-white px-10 py-4 rounded-full font-label-md text-label-md flex items-center gap-2 hover:shadow-lg transition-all active:scale-95">
-                        Generate Narrative <span className="material-symbols-outlined">magic_button</span>
+                      <button
+                        type="button"
+                        onClick={handleGenerate}
+                        disabled={generating}
+                        className="bg-secondary-container text-white px-10 py-4 rounded-full font-label-md text-label-md flex items-center gap-2 hover:shadow-lg transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100"
+                      >
+                        {generating ? (
+                          <>
+                            Generating...
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          </>
+                        ) : (
+                          <>
+                            Generate Narrative <span className="material-symbols-outlined">magic_button</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </section>
