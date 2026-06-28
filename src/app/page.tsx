@@ -291,13 +291,16 @@ export default function ExplorePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ destination, startingLocation }),
       });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json();
+      if (res.ok && data.title) {
         setTripTitle(data.title);
-        showToast('Suggested title generated!', 'success');
+        showToast('✨ Title suggested!', 'success');
+      } else {
+        showToast(data.error || 'Could not generate a title. Try again.', 'error');
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      showToast('Title suggestion failed. Check your connection.', 'error');
+      console.error('[suggestTitle]', err);
     } finally {
       setSuggestTitleLoading(false);
     }
