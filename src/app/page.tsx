@@ -112,6 +112,7 @@ export default function ExplorePage() {
 
   // Modals state
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailModalLoading, setDetailModalLoading] = useState(false);
   const [selectedNarrative, setSelectedNarrative] = useState<any>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editDisplayName, setEditDisplayName] = useState('');
@@ -525,15 +526,23 @@ export default function ExplorePage() {
 
   // Open Detail Modal
   const openDetailModal = async (id: number | string) => {
+    setDetailModalLoading(true);
+    setSelectedNarrative(null);
     try {
-      const res = await fetch(`/api/history/${id}`);
+      const res = await fetch(`/api/history/${id}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setSelectedNarrative(data);
         setDetailModalOpen(true);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(`Could not open narrative: ${errData.error || res.status}`, 'error');
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      showToast(`Failed to load narrative: ${err.message}`, 'error');
+      console.error('[openDetailModal]', err);
+    } finally {
+      setDetailModalLoading(false);
     }
   };
 
@@ -1742,8 +1751,13 @@ export default function ExplorePage() {
                   <div
                     key={rec.id}
                     onClick={() => openDetailModal(rec.id)}
-                    className="bg-white rounded-3xl overflow-hidden border border-outline-variant shadow-ambient hover:shadow-ambient-lg transition-all duration-300 flex flex-col h-[400px] cursor-pointer"
+                    className="bg-white rounded-3xl overflow-hidden border border-outline-variant shadow-ambient hover:shadow-ambient-lg transition-all duration-300 flex flex-col h-[400px] cursor-pointer relative"
                   >
+                    {detailModalLoading && (
+                      <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center rounded-3xl">
+                        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+                      </div>
+                    )}
                     <div className="relative h-44">
                       <img src={img} alt="trip" className="w-full h-full object-cover" />
                       <div className="absolute top-4 left-4 bg-primary-container text-white text-xs px-3 py-1 rounded-full font-bold">
@@ -1903,6 +1917,15 @@ export default function ExplorePage() {
       )}
 
       {/* DETAIL MODAL */}
+      {detailModalLoading && !detailModalOpen && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <p className="text-sm font-semibold text-on-surface-variant">Loading narrative...</p>
+          </div>
+        </div>
+      )}
+
       {detailModalOpen && selectedNarrative && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto relative shadow-2xl">
