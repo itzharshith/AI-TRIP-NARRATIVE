@@ -82,6 +82,13 @@ export default function ExplorePage() {
   const [photosList, setPhotosList] = useState<any[]>([]);
   const [uploadedPhotos, setUploadedPhotos] = useState<Array<{ file: File; url: string; name: string }>>([]);
 
+  // AI Image Generation state (Step 3)
+  const [aiImgLoading, setAiImgLoading] = useState(false);
+  const [aiImgUrl, setAiImgUrl] = useState<string | null>(null);
+  const [aiImgPrompt, setAiImgPrompt] = useState('');
+  const [aiImgMood, setAiImgMood] = useState('Adventurous');
+  const [narrativeDeleting, setNarrativeDeleting] = useState(false);
+
   // TTS State
   const [ttsPlaying, setTtsPlaying] = useState(false);
   const [ttsProgress, setTtsProgress] = useState(0);
@@ -392,6 +399,11 @@ export default function ExplorePage() {
 
       showToast('✨ Trip narrative generated successfully!', 'success');
       
+      // Reset AI image state for the new narrative
+      setAiImgUrl(null);
+      setAiImgPrompt('');
+      setAiImgMood('Adventurous');
+
       // Auto-open the detail modal for the created narrative
       openDetailModal(data.id);
 
@@ -522,6 +534,59 @@ export default function ExplorePage() {
     setUploadedPhotos([]);
     setLastNarrativeData(null);
     setPhotosList([]);
+  };
+
+  // AI Image Generation for Step 3
+  const generateNarrativeImage = async () => {
+    if (!lastNarrativeData) return;
+    setAiImgLoading(true);
+    setAiImgUrl(null);
+    try {
+      const res = await fetch('/api/ai-photo/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          destination: lastNarrativeData.destination || lastNarrativeData.route || '',
+          mood: aiImgMood,
+          prompt: aiImgPrompt || undefined,
+          narrativeId: lastNarrativeData.id,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAiImgUrl(data.dataUrl);
+        // Refresh photos list to include the newly generated image
+        loadNarrativePhotos(lastNarrativeData.id);
+        showToast('✨ AI image generated!', 'success');
+      } else {
+        showToast(data.error || 'Image generation failed.', 'error');
+      }
+    } catch (err: any) {
+      showToast(`Image generation error: ${err.message}`, 'error');
+    } finally {
+      setAiImgLoading(false);
+    }
+  };
+
+  // Delete just-generated narrative
+  const deleteCurrentNarrative = async () => {
+    if (!lastNarrativeData?.id) return;
+    if (!confirm('Are you sure you want to delete this narrative? This cannot be undone.')) return;
+    setNarrativeDeleting(true);
+    try {
+      const res = await fetch(`/api/history/${lastNarrativeData.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Narrative deleted.', 'info');
+        resetWizard();
+      } else {
+        const d = await res.json();
+        showToast(d.error || 'Delete failed.', 'error');
+      }
+    } catch (err: any) {
+      showToast(`Delete error: ${err.message}`, 'error');
+    } finally {
+      setNarrativeDeleting(false);
+    }
   };
 
   // Open Detail Modal
@@ -1655,16 +1720,91 @@ export default function ExplorePage() {
 
                       {/* Right Pane stats */}
                       <div className="space-y-6">
+                        {/* Saved confirmation */}
                         <div className="p-6 bg-primary-container text-white rounded-xl space-y-4">
-                          <p className="font-bold text-lg">Saved to History</p>
+                          <p className="font-bold text-lg">✅ Saved to History</p>
                           <p className="text-sm opacity-95">This narrative has been securely synchronized with your account.</p>
                           <Link href="#history" onClick={() => setActiveView('history')} className="block text-center w-full bg-secondary-container text-white py-3 rounded-lg font-bold hover:shadow-lg transition-all">
                             View My History
                           </Link>
                         </div>
-                        <button onClick={resetWizard} className="w-full py-3 border border-outline-variant text-on-surface-variant rounded-lg font-bold hover:bg-surface-container-low transition-all">
-                          Create Another Story
-                        </button>
+
+                        {/* AI Image Generation panel */}
+                        <div className="p-6 rounded-xl border border-outline-variant bg-surface-container-lowest space-y-4">
+                          <p className="font-bold text-primary flex items-center gap-2">
+                            <span className="material-symbols-outlined text-lg">auto_awesome</span>
+                            Generate AI Image
+                          </p>
+                          <p className="text-xs text-on-surface-variant">Create a stunning travel photo for your narrative using Gemini AI.</p>
+
+                          <select
+                            value={aiImgMood}
+                            onChange={e => setAiImgMood(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
+                          >
+                            <option value="Adventurous">⚡ Adventurous</option>
+                            <option value="Poetic">🌸 Poetic &amp; Serene</option>
+                            <option value="Golden hour">🌅 Golden Hour</option>
+                            <option value="Dramatic">🎭 Dramatic</option>
+                            <option value="Misty">🌫️ Misty Morning</option>
+                            <option value="Night">🌙 Night Scene</option>
+                          </select>
+
+                          <textarea
+                            placeholder="Optional: describe extra details (e.g. 'coffee plantation road, green hills')..."
+                            value={aiImgPrompt}
+                            onChange={e => setAiImgPrompt(e.target.value)}
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm resize-none"
+                          />
+
+                          <button
+                            onClick={generateNarrativeImage}
+                            disabled={aiImgLoading}
+                            className="w-full bg-gradient-to-r from-primary to-secondary-container text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-all active:scale-95 disabled:opacity-60"
+                          >
+                            {aiImgLoading ? (
+                              <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Generating...</>
+                            ) : (
+                              <><span className="material-symbols-outlined text-base">image</span> Generate Image</>
+                            )}
+                          </button>
+
+                          {aiImgUrl && (
+                            <div className="space-y-2">
+                              <img src={aiImgUrl} alt="AI generated" className="w-full rounded-xl shadow-md object-cover aspect-video" />
+                              <a
+                                href={aiImgUrl}
+                                download={`narrative-image-${lastNarrativeData.id}.png`}
+                                className="block text-center text-xs text-primary font-bold hover:underline"
+                              >
+                                ⬇ Download Image
+                              </a>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="space-y-3 pt-2">
+                          <button
+                            onClick={resetWizard}
+                            className="w-full py-3 border border-outline-variant text-on-surface-variant rounded-lg font-bold hover:bg-surface-container-low transition-all flex items-center justify-center gap-2"
+                          >
+                            <span className="material-symbols-outlined text-base">add_circle</span>
+                            Create Another Story
+                          </button>
+                          <button
+                            onClick={deleteCurrentNarrative}
+                            disabled={narrativeDeleting}
+                            className="w-full py-3 border border-error/40 text-error rounded-lg font-bold hover:bg-error/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                          >
+                            {narrativeDeleting ? (
+                              <><div className="w-4 h-4 border-2 border-error/30 border-t-error rounded-full animate-spin" /> Deleting...</>
+                            ) : (
+                              <><span className="material-symbols-outlined text-base">delete</span> Delete This Narrative</>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </section>
