@@ -391,6 +391,9 @@ export default function ExplorePage() {
       }
 
       showToast('✨ Trip narrative generated successfully!', 'success');
+      
+      // Auto-open the detail modal for the created narrative
+      openDetailModal(data.id);
 
     } catch (err: any) {
       showToast(`Generation failed: ${err.message}`, 'error');

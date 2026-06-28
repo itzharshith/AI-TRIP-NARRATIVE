@@ -196,21 +196,21 @@ export async function getGenerations({ page = 1, limit = 12, search = '', userId
 }
 
 export async function getGeneration(id: number | string) {
-  const res = await turso.execute('SELECT * FROM generations WHERE legacy_id = ? AND is_deleted = 0 LIMIT 1', [Number(id)]);
+  const res = await turso.execute('SELECT * FROM generations WHERE (id = ? OR legacy_id = ?) AND is_deleted = 0 LIMIT 1', [Number(id), Number(id)]);
   return res.rows[0] ? toRow(res.rows[0]) : null;
 }
 
 export async function updateRating(id: number | string, rating: number | null, comment: string | null) {
-  await turso.execute('UPDATE generations SET rating = ?, comment = ? WHERE legacy_id = ?', [rating, comment, Number(id)]);
+  await turso.execute('UPDATE generations SET rating = ?, comment = ? WHERE (id = ? OR legacy_id = ?)', [rating, comment, Number(id), Number(id)]);
 }
 
 export async function deleteGeneration(id: number | string) {
   const now = new Date().toISOString();
-  await turso.execute('UPDATE generations SET is_deleted = 1, deleted_at = ? WHERE legacy_id = ?', [now, Number(id)]);
+  await turso.execute('UPDATE generations SET is_deleted = 1, deleted_at = ? WHERE (id = ? OR legacy_id = ?)', [now, Number(id), Number(id)]);
 }
 
 export async function restoreGeneration(id: number | string) {
-  await turso.execute('UPDATE generations SET is_deleted = 0, deleted_at = NULL WHERE legacy_id = ?', [Number(id)]);
+  await turso.execute('UPDATE generations SET is_deleted = 0, deleted_at = NULL WHERE (id = ? OR legacy_id = ?)', [Number(id), Number(id)]);
 }
 
 // ── Analytics ─────────────────────────────────────────────────
@@ -510,7 +510,7 @@ export async function setSetting(key: string, value: string) {
 // ── User Dashboard & Analytics Extensions ─────────────────────
 
 export async function incrementViews(id: number | string) {
-  await turso.execute('UPDATE generations SET views_count = views_count + 1 WHERE legacy_id = ?', [Number(id)]);
+  await turso.execute('UPDATE generations SET views_count = views_count + 1 WHERE (id = ? OR legacy_id = ?)', [Number(id), Number(id)]);
 }
 
 export interface UserProfileInput {
@@ -707,8 +707,8 @@ export async function updateNarrative(id: number | string, updates: { title?: st
   vals.push(new Date().toISOString());
   vals.push(Number(id));
 
-  const sql = `UPDATE generations SET ${fields.join(', ')} WHERE legacy_id = ?`;
-  await turso.execute(sql, vals);
+  const sql = `UPDATE generations SET ${fields.join(', ')} WHERE (id = ? OR legacy_id = ?)`;
+  await turso.execute(sql, [...vals, Number(id), Number(id)]);
 }
 
 export async function addRating(narrativeId: number | string, userId: string, userName: string, rating: number, review: string) {
@@ -728,7 +728,7 @@ export async function addRating(narrativeId: number | string, userId: string, us
   const avg = Number(statsRes.rows[0]?.avg || 0);
   const count = Number(statsRes.rows[0]?.count || 0);
 
-  await turso.execute('UPDATE generations SET avg_rating = ?, ratings_count = ? WHERE legacy_id = ?', [avg, count, Number(narrativeId)]);
+  await turso.execute('UPDATE generations SET avg_rating = ?, ratings_count = ? WHERE (id = ? OR legacy_id = ?)', [avg, count, Number(narrativeId), Number(narrativeId)]);
 }
 
 export async function getNarrativeRatings(narrativeId: number | string) {
@@ -752,11 +752,11 @@ export async function toggleWishlist(userId: string, narrativeId: number | strin
 
   if (exists) {
     await turso.execute('DELETE FROM wishlist WHERE userId = ? AND narrativeId = ?', [userId, idNum]);
-    await turso.execute('UPDATE generations SET wishlist_count = MAX(0, wishlist_count - 1) WHERE legacy_id = ?', [idNum]);
+    await turso.execute('UPDATE generations SET wishlist_count = MAX(0, wishlist_count - 1) WHERE (id = ? OR legacy_id = ?)', [idNum, idNum]);
     return { added: false };
   } else {
     await turso.execute('INSERT INTO wishlist (userId, narrativeId, createdAt) VALUES (?, ?, ?)', [userId, idNum, now]);
-    await turso.execute('UPDATE generations SET wishlist_count = wishlist_count + 1 WHERE legacy_id = ?', [idNum]);
+    await turso.execute('UPDATE generations SET wishlist_count = wishlist_count + 1 WHERE (id = ? OR legacy_id = ?)', [idNum, idNum]);
     return { added: true };
   }
 }
@@ -764,7 +764,7 @@ export async function toggleWishlist(userId: string, narrativeId: number | strin
 export async function getUserWishlist(userId: string) {
   const res = await turso.execute(`
     SELECT g.* FROM generations g
-    INNER JOIN wishlist w ON g.legacy_id = w.narrativeId
+    INNER JOIN wishlist w ON (g.legacy_id = w.narrativeId OR g.id = w.narrativeId)
     WHERE w.userId = ? AND g.is_deleted = 0
   `, [userId]);
   return res.rows.map(toRow);
@@ -787,7 +787,7 @@ export async function createReport(narrativeId: number | string, reportedBy: str
 export async function getReports() {
   const res = await turso.execute(`
     SELECT r.*, g.title as narrativeTitle FROM reports r
-    LEFT JOIN generations g ON r.narrativeId = g.legacy_id
+    LEFT JOIN generations g ON (r.narrativeId = g.legacy_id OR r.narrativeId = g.id)
     ORDER BY r.createdAt DESC
   `);
   return res.rows;
@@ -799,7 +799,7 @@ export async function updateReportStatus(reportId: string, status: string) {
 }
 
 export async function incrementShares(id: number | string) {
-  await turso.execute('UPDATE generations SET shares_count = shares_count + 1 WHERE legacy_id = ?', [Number(id)]);
+  await turso.execute('UPDATE generations SET shares_count = shares_count + 1 WHERE (id = ? OR legacy_id = ?)', [Number(id), Number(id)]);
 }
 
 // ── Trip Photos ───────────────────────────────────────────────
