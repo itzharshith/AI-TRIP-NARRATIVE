@@ -753,6 +753,9 @@ export default function ExplorePage() {
         setEditorGeneratedImgUrl(data.dataUrl);
         setEditorGeneratedPhotoId(data.photoId);
         showToast('✨ AI image generated!', 'success');
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'AI image generation failed.', 'error');
       }
     } catch (err: any) {
       showToast(`AI generation failed: ${err.message}`, 'error');

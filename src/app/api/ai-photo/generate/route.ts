@@ -36,18 +36,32 @@ export async function POST(req: NextRequest) {
 
     console.log(`[ai-photo/generate] Generating image for: "${imagePrompt.slice(0, 80)}..."`);
 
-    // Use Gemini image generation model
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-preview-image-generation',
-    });
-
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: imagePrompt }] }],
-      // responseModalities is a valid Gemini 2.0 API param but not yet typed in the SDK
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      } as any,
-    });
+    // Use Gemini image generation model with fallback
+    let result;
+    let modelName = 'gemini-3.1-flash-image';
+    try {
+      console.log(`[ai-photo/generate] Attempting generation with model: ${modelName}`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: imagePrompt }] }],
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        } as any,
+      });
+    } catch (primaryErr: any) {
+      console.warn(`[ai-photo/generate] Primary model ${modelName} failed, trying fallback. Error:`, primaryErr.message);
+      
+      // If primary model failed (e.g. quota, not found, etc.), try the fallback model
+      modelName = 'gemini-2.5-flash-image';
+      console.log(`[ai-photo/generate] Attempting generation with fallback model: ${modelName}`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: imagePrompt }] }],
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        } as any,
+      });
+    }
 
     // Extract the image from the response candidates
     const parts = result.response.candidates?.[0]?.content?.parts || [];
@@ -90,6 +104,12 @@ export async function POST(req: NextRequest) {
 
   } catch (err: any) {
     console.error('[ai-photo/generate] Error:', err.message);
+    if (err.message?.includes('quota') || err.message?.includes('429') || err.message?.includes('Quota')) {
+      return NextResponse.json({
+        error: 'Image generation quota exceeded. Generating images requires a paid billing account in Google AI Studio or is restricted in your region. Please verify your Gemini API key settings in AI Studio.',
+        detail: err.message
+      }, { status: 429 });
+    }
     if (err.message?.includes('not found') || err.message?.includes('model')) {
       return NextResponse.json({ error: 'Image generation model not available. Try again or use a different prompt.', detail: err.message }, { status: 503 });
     }
