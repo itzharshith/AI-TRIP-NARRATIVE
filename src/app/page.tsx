@@ -48,7 +48,7 @@ const THEMES: Record<string, { grad1: string; grad2: string; grad3: string; text
 };
 
 export default function ExplorePage() {
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const [activeView, setActiveView] = useState('explore');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -177,8 +177,14 @@ export default function ExplorePage() {
     };
     window.addEventListener('hashchange', handleHash);
     handleHash();
-    return () => window.removeEventListener('hashchange', handleHash);
   }, []);
+
+  // Redirect to login if user is not signed in and tries to access generate
+  useEffect(() => {
+    if (!authLoading && !user && activeView === 'generate') {
+      window.location.href = '/login';
+    }
+  }, [activeView, user, authLoading]);
 
   // Sync speech voices
   useEffect(() => {
