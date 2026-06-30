@@ -1603,29 +1603,27 @@ export default function ExplorePage() {
                         </div>
                       </div>
 
+                      <div className="flex items-center gap-3 p-4 bg-surface-container-low rounded-xl border border-outline-variant/60 mt-4">
+                        <input
+                          type="checkbox"
+                          id="photoPermissionCheck"
+                          checked={photoPermission}
+                          onChange={(e) => setPhotoPermission(e.target.checked)}
+                          className="w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary cursor-pointer"
+                        />
+                        <label htmlFor="photoPermissionCheck" className="text-xs font-semibold text-on-surface-variant cursor-pointer select-none">
+                          I confirm that the customer has given their consent to use their pictures. *
+                        </label>
+                      </div>
+
                       {uploadedPhotos.length > 0 && (
-                        <div className="space-y-4 mt-4">
-                          <div className="grid grid-cols-5 md:grid-cols-10 gap-3">
-                            {uploadedPhotos.map((p, idx) => (
-                              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-md">
-                                <img src={p.url} alt="upload" className="w-full h-full object-cover" />
-                                <button onClick={(e) => { e.stopPropagation(); removePhoto(idx); }} className="absolute top-1 right-1 w-5 h-5 bg-black/70 text-white rounded-full flex items-center justify-center text-[10px] hover:bg-black">×</button>
-                              </div>
-                            ))}
-                          </div>
-                          
-                          <div className="flex items-center gap-3 p-4 bg-surface-container-low rounded-xl border border-outline-variant/60">
-                            <input
-                              type="checkbox"
-                              id="photoPermissionCheck"
-                              checked={photoPermission}
-                              onChange={(e) => setPhotoPermission(e.target.checked)}
-                              className="w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary cursor-pointer"
-                            />
-                            <label htmlFor="photoPermissionCheck" className="text-xs font-semibold text-on-surface-variant cursor-pointer select-none">
-                              I confirm that the customer has given their consent to use their pictures. *
-                            </label>
-                          </div>
+                        <div className="grid grid-cols-5 md:grid-cols-10 gap-3 mt-4">
+                          {uploadedPhotos.map((p, idx) => (
+                            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden shadow-md">
+                              <img src={p.url} alt="upload" className="w-full h-full object-cover" />
+                              <button onClick={(e) => { e.stopPropagation(); removePhoto(idx); }} className="absolute top-1 right-1 w-5 h-5 bg-black/70 text-white rounded-full flex items-center justify-center text-[10px] hover:bg-black">×</button>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
