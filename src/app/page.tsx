@@ -1796,60 +1796,7 @@ export default function ExplorePage() {
                           </Link>
                         </div>
 
-                        {/* AI Image Generation panel */}
-                        <div className="p-6 rounded-xl border border-outline-variant bg-surface-container-lowest space-y-4">
-                          <p className="font-bold text-primary flex items-center gap-2">
-                            <span className="material-symbols-outlined text-lg">auto_awesome</span>
-                            Generate AI Image
-                          </p>
-                          <p className="text-xs text-on-surface-variant">Create a stunning travel photo for your narrative using Gemini AI.</p>
 
-                          <select
-                            value={aiImgMood}
-                            onChange={e => setAiImgMood(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                          >
-                            <option value="Adventurous">⚡ Adventurous</option>
-                            <option value="Poetic">🌸 Poetic &amp; Serene</option>
-                            <option value="Golden hour">🌅 Golden Hour</option>
-                            <option value="Dramatic">🎭 Dramatic</option>
-                            <option value="Misty">🌫️ Misty Morning</option>
-                            <option value="Night">🌙 Night Scene</option>
-                          </select>
-
-                          <textarea
-                            placeholder="Optional: describe extra details (e.g. 'coffee plantation road, green hills')..."
-                            value={aiImgPrompt}
-                            onChange={e => setAiImgPrompt(e.target.value)}
-                            rows={2}
-                            className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm resize-none"
-                          />
-
-                          <button
-                            onClick={generateNarrativeImage}
-                            disabled={aiImgLoading}
-                            className="w-full bg-gradient-to-r from-primary to-secondary-container text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-all active:scale-95 disabled:opacity-60"
-                          >
-                            {aiImgLoading ? (
-                              <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Generating...</>
-                            ) : (
-                              <><span className="material-symbols-outlined text-base">image</span> Generate Image</>
-                            )}
-                          </button>
-
-                          {aiImgUrl && (
-                            <div className="space-y-2">
-                              <img src={aiImgUrl} alt="AI generated" className="w-full rounded-xl shadow-md object-cover aspect-video" />
-                              <a
-                                href={aiImgUrl}
-                                download={`narrative-image-${lastNarrativeData.id}.png`}
-                                className="block text-center text-xs text-primary font-bold hover:underline"
-                              >
-                                ⬇ Download Image
-                              </a>
-                            </div>
-                          )}
-                        </div>
 
                         {/* Action buttons */}
                         <div className="space-y-3 pt-2">
@@ -2212,7 +2159,6 @@ export default function ExplorePage() {
             <div className="flex gap-2 px-6 pt-4 border-b border-outline-variant pb-4">
               <button onClick={() => switchEditorTab('edit')} className={`px-4 py-2 rounded-xl text-sm font-semibold ${editorActiveTab === 'edit' ? 'active-tab' : 'inactive-tab'}`}>✏️ Edit</button>
               <button onClick={() => switchEditorTab('ai-enhance')} className={`px-4 py-2 rounded-xl text-sm font-semibold ${editorActiveTab === 'ai-enhance' ? 'active-tab' : 'inactive-tab'}`}>🤖 AI Enhance</button>
-              <button onClick={() => switchEditorTab('ai-generate')} className={`px-4 py-2 rounded-xl text-sm font-semibold ${editorActiveTab === 'ai-generate' ? 'active-tab' : 'inactive-tab'}`}>✨ AI Generate</button>
             </div>
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2304,40 +2250,7 @@ export default function ExplorePage() {
                   </div>
                 )}
 
-                {editorActiveTab === 'ai-generate' && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-secondary-fixed/30 border border-secondary-container/40 rounded-xl space-y-3">
-                      <p className="font-bold text-primary text-sm">🎨 AI Image Generator</p>
-                      <input type="text" placeholder="Destination" value={editorAiGenerateDest} onChange={e => setEditorAiGenerateDest(e.target.value)} className="w-full px-3 py-2 border rounded text-xs" />
-                      <select value={editorAiGenerateMood} onChange={e => setEditorAiGenerateMood(e.target.value)} className="w-full px-3 py-2 border rounded text-xs bg-white">
-                        <option value="Adventurous">⚡ Adventurous</option>
-                        <option value="Serene">🌿 Serene &amp; Peaceful</option>
-                        <option value="Golden hour">🌅 Golden Hour</option>
-                        <option value="Dramatic">🎭 Dramatic</option>
-                      </select>
-                      <textarea placeholder="Custom visual prompt details..." value={editorAiGeneratePrompt} onChange={e => setEditorAiGeneratePrompt(e.target.value)} className="w-full px-3 py-2 border rounded text-xs resize-none" rows={2} />
-                      <button onClick={runAIGenerate} disabled={editorAiGenerateLoading} className="w-full bg-secondary-container text-white py-3 rounded-xl font-bold text-sm">
-                        {editorAiGenerateLoading ? 'Painting scene...' : 'Generate AI Image'}
-                      </button>
-                    </div>
 
-                    {editorAiGenerateLoading && (
-                      <div className="flex flex-col items-center py-6 gap-2">
-                        <div className="w-8 h-8 border-2 border-secondary-container/20 border-t-secondary-container rounded-full animate-spin"></div>
-                        <p className="text-xs text-outline">Generating custom scenery via Gemini Imagen...</p>
-                      </div>
-                    )}
-
-                    {editorGeneratedImgUrl && (
-                      <div className="space-y-2">
-                        <img src={editorGeneratedImgUrl} alt="generated" className="w-full rounded-xl object-cover max-h-[160px]" />
-                        <button onClick={useGeneratedImage} className="w-full bg-primary text-white py-2 rounded-xl text-xs font-bold">
-                          Import into Editor
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>
