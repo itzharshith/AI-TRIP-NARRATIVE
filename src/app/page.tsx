@@ -350,7 +350,7 @@ export default function ExplorePage() {
   // Generate narrative API triggers
   const handleGenerate = async () => {
     if (uploadedPhotos.length > 0 && !photoPermission) {
-      showToast('Please confirm customer permission has been taken to use the photos.', 'error');
+      showToast('Please confirm that the customer has given their consent to use their pictures.', 'error');
       return;
     }
     setGenerating(true);
@@ -1623,7 +1623,7 @@ export default function ExplorePage() {
                               className="w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary cursor-pointer"
                             />
                             <label htmlFor="photoPermissionCheck" className="text-xs font-semibold text-on-surface-variant cursor-pointer select-none">
-                              I confirm that customer permission has been taken to use the attached photos. *
+                              I confirm that the customer has given their consent to use their pictures. *
                             </label>
                           </div>
                         </div>
