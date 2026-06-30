@@ -604,6 +604,23 @@ export default function ExplorePage() {
     }
   };
 
+  // Delete a narrative from history list
+  const deleteNarrative = async (id: number | string) => {
+    if (!confirm('Are you sure you want to delete this narrative? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Narrative deleted successfully!', 'success');
+        loadHistoryGrid();
+      } else {
+        const d = await res.json().catch(() => ({}));
+        showToast(d.error || 'Delete failed.', 'error');
+      }
+    } catch (err: any) {
+      showToast(`Delete error: ${err.message}`, 'error');
+    }
+  };
+
   // Open Detail Modal
   const openDetailModal = async (id: number | string) => {
     setDetailModalLoading(true);
@@ -1953,6 +1970,15 @@ export default function ExplorePage() {
                       <div className="absolute top-4 left-4 bg-primary-container text-white text-xs px-3 py-1 rounded-full font-bold">
                         {rec.tone}
                       </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteNarrative(rec.id); }}
+                        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center hover:bg-error-container/20 hover:text-error hover:scale-110 active:scale-95 transition-all text-on-surface-variant z-20"
+                        title="Delete Narrative"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                          delete
+                        </span>
+                      </button>
                     </div>
                     <div className="p-6 flex-1 flex flex-col justify-between">
                       <div>
@@ -2119,7 +2145,14 @@ export default function ExplorePage() {
       {detailModalOpen && selectedNarrative && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto relative shadow-2xl">
-            <button onClick={() => setDetailModalOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high text-xl">&times;</button>
+            <button onClick={() => setDetailModalOpen(false)} className="absolute top-4 right-4 w-9 h-9 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high text-xl z-10">&times;</button>
+            <button
+              onClick={() => { setDetailModalOpen(false); deleteNarrative(selectedNarrative.id); }}
+              className="absolute top-4 right-16 w-9 h-9 rounded-full bg-surface-container flex items-center justify-center hover:bg-error-container/20 hover:text-error text-on-surface-variant z-10"
+              title="Delete Narrative"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+            </button>
             <h2 className="font-bold text-2xl text-primary mb-2">{selectedNarrative.title}</h2>
             <p className="text-xs text-outline mb-6">📍 Route: {selectedNarrative.route} · Driver: {selectedNarrative.driver_name}</p>
             <div className="narrative-prose leading-relaxed whitespace-pre-line">{selectedNarrative.narrative}</div>
